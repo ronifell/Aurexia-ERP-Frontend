@@ -87,24 +87,25 @@ const QRScannerPage = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="h-screen overflow-hidden flex flex-col">
       <Navbar />
       
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-4 bg-yellow-500/10 rounded-full">
-              <QrCode className="w-16 h-16 text-yellow-400" />
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="mb-6 text-center">
+            <div className="flex justify-center mb-3">
+              <div className="p-3 bg-yellow-500/10 rounded-full">
+                <QrCode className="w-12 h-12 text-yellow-400" />
+              </div>
             </div>
+            <h1 className="text-2xl font-bold gold-text mb-1">QR Scanner</h1>
+            <p className="text-gray-400 text-sm">Scan operator badge and process QR codes</p>
           </div>
-          <h1 className="text-3xl font-bold gold-text mb-2">QR Scanner</h1>
-          <p className="text-gray-400">Scan operator badge and process QR codes</p>
-        </div>
 
         {!showCompletionForm ? (
           /* Scan Form */
-          <div className="card-aurexia p-8 max-w-2xl mx-auto">
-            <form onSubmit={handleScan} className="space-y-6">
+          <div className="card-aurexia p-6 max-w-2xl mx-auto">
+            <form onSubmit={handleScan} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Operator Badge ID
@@ -136,14 +137,14 @@ const QRScannerPage = () => {
 
               <button
                 type="submit"
-                className="w-full btn-aurexia py-3 text-base font-semibold"
+                className="w-full btn-aurexia py-2 text-sm font-semibold"
               >
                 Scan QR Code
               </button>
             </form>
 
             {scanResult && scanResult.success && scanResult.status !== 'awaiting_completion' && (
-              <div className="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <div className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="w-5 h-5 text-green-400" />
                   <div>
@@ -157,25 +158,25 @@ const QRScannerPage = () => {
             )}
 
             {scanResult && !scanResult.success && (
-              <div className="mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
                 <div className="flex items-center space-x-2">
                   <XCircle className="w-5 h-5 text-red-400" />
-                  <p className="text-red-400">{scanResult.message}</p>
+                  <p className="text-red-400 text-sm">{scanResult.message}</p>
                 </div>
               </div>
             )}
           </div>
         ) : (
           /* Completion Form */
-          <div className="card-aurexia p-8 max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-100 mb-6 text-center">
+          <div className="card-aurexia p-6 max-w-2xl mx-auto">
+            <h2 className="text-xl font-bold text-gray-100 mb-4 text-center">
               Complete Operation
             </h2>
-            <p className="text-center text-gray-400 mb-6">
+            <p className="text-center text-gray-400 mb-4 text-sm">
               Process: <span className="text-yellow-400">{scanResult?.process_name}</span>
             </p>
 
-            <form onSubmit={handleCompleteOperation} className="space-y-6">
+            <form onSubmit={handleCompleteOperation} className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -221,7 +222,7 @@ const QRScannerPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-xs font-medium text-gray-300 mb-1">
                   Machine ID (Optional)
                 </label>
                 <input
@@ -229,20 +230,20 @@ const QRScannerPage = () => {
                   value={machineId}
                   onChange={(e) => setMachineId(e.target.value)}
                   placeholder="Machine ID"
-                  className="w-full px-4 py-3 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                  className="w-full px-3 py-2 text-sm bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-xs font-medium text-gray-300 mb-1">
                   Notes / Comments
                 </label>
                 <textarea
                   value={operatorNotes}
                   onChange={(e) => setOperatorNotes(e.target.value)}
-                  rows={3}
+                  rows={2}
                   placeholder="Any notes or comments..."
-                  className="w-full px-4 py-3 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                  className="w-full px-3 py-2 text-sm bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
                 />
               </div>
 
@@ -256,13 +257,13 @@ const QRScannerPage = () => {
                     setQrCode('');
                     setBadgeId('');
                   }}
-                  className="flex-1 px-4 py-3 bg-black/30 backdrop-blur-sm hover:bg-black/40 text-gray-100 font-semibold rounded-lg border border-gray-500/30"
+                  className="flex-1 px-4 py-2 text-sm bg-black/30 backdrop-blur-sm hover:bg-black/40 text-gray-100 font-semibold rounded-lg border border-gray-500/30"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 btn-aurexia py-3 text-base font-semibold"
+                  className="flex-1 btn-aurexia py-2 text-sm font-semibold"
                 >
                   Complete Operation
                 </button>
@@ -272,9 +273,9 @@ const QRScannerPage = () => {
         )}
 
         {/* Instructions */}
-        <div className="mt-8 card-aurexia p-6 max-w-2xl mx-auto">
-          <h3 className="text-lg font-semibold text-gray-200 mb-4">Instructions</h3>
-          <ol className="space-y-2 text-sm text-gray-400">
+        <div className="mt-6 card-aurexia p-4 max-w-2xl mx-auto">
+          <h3 className="text-sm font-semibold text-gray-200 mb-2">Instructions</h3>
+          <ol className="space-y-1 text-xs text-gray-400">
             <li>1. Scan your operator badge ID</li>
             <li>2. Scan the operation QR code from the travel sheet</li>
             <li>3. If starting an operation, it will be marked as "In Progress"</li>
@@ -282,6 +283,7 @@ const QRScannerPage = () => {
             <li>5. Enter good, scrap, and pending quantities</li>
             <li>6. Add any notes or comments and submit</li>
           </ol>
+        </div>
         </div>
       </div>
     </div>

@@ -73,7 +73,7 @@ const DashboardPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
           <p className="mt-4 text-gray-400">Loading dashboard...</p>
@@ -83,83 +83,84 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="h-screen overflow-hidden flex flex-col">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold gold-text mb-2">MOAB - Supervision Dashboard</h1>
-          <p className="text-gray-400">Real-time production monitoring and control</p>
-        </div>
+      <div className="flex-1 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full flex flex-col">
+          {/* Header */}
+          <div className="mb-4">
+            <h1 className="text-2xl font-bold gold-text mb-1">MOAB - Supervision Dashboard</h1>
+            <p className="text-gray-400 text-sm">Real-time production monitoring and control</p>
+          </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          <div className="card-aurexia p-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+          <div className="card-aurexia p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Open Orders</p>
-                <p className="text-2xl font-bold text-yellow-400">{stats?.total_open_orders || 0}</p>
+                <p className="text-gray-400 text-xs">Open Orders</p>
+                <p className="text-xl font-bold text-yellow-400">{stats?.total_open_orders || 0}</p>
               </div>
-              <Factory className="w-8 h-8 text-yellow-500/50" />
+              <Factory className="w-6 h-6 text-yellow-500/50" />
             </div>
           </div>
 
-          <div className="card-aurexia p-6">
+          <div className="card-aurexia p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">In Production</p>
-                <p className="text-2xl font-bold text-blue-400">{stats?.total_in_production || 0}</p>
+                <p className="text-gray-400 text-xs">In Production</p>
+                <p className="text-xl font-bold text-blue-400">{stats?.total_in_production || 0}</p>
               </div>
-              <TrendingUp className="w-8 h-8 text-blue-500/50" />
+              <TrendingUp className="w-6 h-6 text-blue-500/50" />
             </div>
           </div>
 
-          <div className="card-aurexia p-6 cursor-pointer hover:bg-green-500/10" onClick={() => setFilterRisk('Green')}>
+          <div className="card-aurexia p-4 cursor-pointer hover:bg-green-500/10" onClick={() => setFilterRisk('Green')}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">On Time</p>
-                <p className="text-2xl font-bold text-green-400">{stats?.total_on_time || 0}</p>
+                <p className="text-gray-400 text-xs">On Time</p>
+                <p className="text-xl font-bold text-green-400">{stats?.total_on_time || 0}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-500/50" />
+              <CheckCircle className="w-6 h-6 text-green-500/50" />
             </div>
           </div>
 
-          <div className="card-aurexia p-6 cursor-pointer hover:bg-yellow-500/10" onClick={() => setFilterRisk('Yellow')}>
+          <div className="card-aurexia p-4 cursor-pointer hover:bg-yellow-500/10" onClick={() => setFilterRisk('Yellow')}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">At Risk</p>
-                <p className="text-2xl font-bold text-yellow-400">{stats?.total_at_risk || 0}</p>
+                <p className="text-gray-400 text-xs">At Risk</p>
+                <p className="text-xl font-bold text-yellow-400">{stats?.total_at_risk || 0}</p>
               </div>
-              <Clock className="w-8 h-8 text-yellow-500/50" />
+              <Clock className="w-6 h-6 text-yellow-500/50" />
             </div>
           </div>
 
-          <div className="card-aurexia p-6 cursor-pointer hover:bg-red-500/10" onClick={() => setFilterRisk('Red')}>
+          <div className="card-aurexia p-4 cursor-pointer hover:bg-red-500/10" onClick={() => setFilterRisk('Red')}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Delayed</p>
-                <p className="text-2xl font-bold text-red-400">{stats?.total_delayed || 0}</p>
+                <p className="text-gray-400 text-xs">Delayed</p>
+                <p className="text-xl font-bold text-red-400">{stats?.total_delayed || 0}</p>
               </div>
-              <AlertTriangle className="w-8 h-8 text-red-500/50" />
+              <AlertTriangle className="w-6 h-6 text-red-500/50" />
             </div>
           </div>
         </div>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
           {/* Daily Production Chart */}
-          <div className="card-aurexia p-6">
-            <h3 className="text-lg font-semibold text-gray-200 mb-4">Daily Production (7 days)</h3>
-            <ResponsiveContainer width="100%" height={250}>
+          <div className="card-aurexia p-4">
+            <h3 className="text-sm font-semibold text-gray-200 mb-2">Daily Production (7 days)</h3>
+            <ResponsiveContainer width="100%" height={180}>
               <BarChart data={dailyProduction}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="date" stroke="#999" />
-                <YAxis stroke="#999" />
+                <XAxis dataKey="date" stroke="#999" tick={{ fontSize: 11 }} />
+                <YAxis stroke="#999" tick={{ fontSize: 11 }} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #D4AF37' }}
+                  contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #D4AF37', fontSize: '12px' }}
                 />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
                 <Bar dataKey="good" fill="#22c55e" name="Good" />
                 <Bar dataKey="scrap" fill="#ef4444" name="Scrap" />
               </BarChart>
@@ -167,17 +168,17 @@ const DashboardPage = () => {
           </div>
 
           {/* Work Center Load Chart */}
-          <div className="card-aurexia p-6">
-            <h3 className="text-lg font-semibold text-gray-200 mb-4">Work Center Load</h3>
-            <ResponsiveContainer width="100%" height={250}>
+          <div className="card-aurexia p-4">
+            <h3 className="text-sm font-semibold text-gray-200 mb-2">Work Center Load</h3>
+            <ResponsiveContainer width="100%" height={180}>
               <BarChart data={workCenterLoad}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="work_center_name" stroke="#999" angle={-45} textAnchor="end" height={80} />
-                <YAxis stroke="#999" />
+                <XAxis dataKey="work_center_name" stroke="#999" angle={-45} textAnchor="end" height={60} tick={{ fontSize: 10 }} />
+                <YAxis stroke="#999" tick={{ fontSize: 11 }} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #D4AF37' }}
+                  contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #D4AF37', fontSize: '12px' }}
                 />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
                 <Bar dataKey="pending" stackId="a" fill="#eab308" name="Pending" />
                 <Bar dataKey="in_progress" stackId="a" fill="#3b82f6" name="In Progress" />
                 <Bar dataKey="completed" stackId="a" fill="#22c55e" name="Completed" />
@@ -187,65 +188,65 @@ const DashboardPage = () => {
         </div>
 
         {/* Production Orders Table */}
-        <div className="card-aurexia p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-200">Production Orders</h3>
+        <div className="card-aurexia p-4 flex-1 flex flex-col min-h-0">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-200">Production Orders</h3>
             {filterRisk && (
               <button
                 onClick={() => setFilterRisk('')}
-                className="text-sm text-yellow-400 hover:text-yellow-300"
+                className="text-xs text-yellow-400 hover:text-yellow-300"
               >
                 Clear filter
               </button>
             )}
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
+          <div className="overflow-auto flex-1">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-black/50 backdrop-blur-sm">
                 <tr className="border-b border-yellow-500/20">
-                  <th className="text-left py-3 px-4 text-gray-400 font-medium">PO Number</th>
-                  <th className="text-left py-3 px-4 text-gray-400 font-medium">Customer</th>
-                  <th className="text-left py-3 px-4 text-gray-400 font-medium">Part Number</th>
-                  <th className="text-center py-3 px-4 text-gray-400 font-medium">Quantity</th>
-                  <th className="text-center py-3 px-4 text-gray-400 font-medium">Progress</th>
-                  <th className="text-center py-3 px-4 text-gray-400 font-medium">Due Date</th>
-                  <th className="text-center py-3 px-4 text-gray-400 font-medium">Status</th>
+                  <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">PO Number</th>
+                  <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Customer</th>
+                  <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Part Number</th>
+                  <th className="text-center py-2 px-3 text-gray-400 font-medium text-xs">Quantity</th>
+                  <th className="text-center py-2 px-3 text-gray-400 font-medium text-xs">Progress</th>
+                  <th className="text-center py-2 px-3 text-gray-400 font-medium text-xs">Due Date</th>
+                  <th className="text-center py-2 px-3 text-gray-400 font-medium text-xs">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredProduction.map((item) => (
                   <tr key={item.id} className="border-b border-gray-800 hover:bg-yellow-500/5">
-                    <td className="py-3 px-4 text-gray-200">{item.po_number}</td>
-                    <td className="py-3 px-4 text-gray-300">{item.customer_name || '-'}</td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-3 text-gray-200 text-xs">{item.po_number}</td>
+                    <td className="py-2 px-3 text-gray-300 text-xs">{item.customer_name || '-'}</td>
+                    <td className="py-2 px-3">
                       <div>
-                        <p className="text-gray-200">{item.part_number}</p>
+                        <p className="text-gray-200 text-xs">{item.part_number}</p>
                         {item.part_description && (
-                          <p className="text-xs text-gray-500">{item.part_description}</p>
+                          <p className="text-[10px] text-gray-500">{item.part_description}</p>
                         )}
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-center text-gray-200">
+                    <td className="py-2 px-3 text-center text-gray-200 text-xs">
                       {item.quantity_completed} / {item.quantity}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-3">
                       <div className="flex items-center justify-center">
-                        <div className="w-full max-w-[100px] bg-black/30 backdrop-blur-sm rounded-full h-2 border border-yellow-500/20">
+                        <div className="w-full max-w-[80px] bg-black/30 backdrop-blur-sm rounded-full h-1.5 border border-yellow-500/20">
                           <div
-                            className="bg-yellow-500 h-2 rounded-full"
+                            className="bg-yellow-500 h-1.5 rounded-full"
                             style={{ width: `${item.completion_percentage}%` }}
                           />
                         </div>
-                        <span className="ml-2 text-xs text-gray-400">{item.completion_percentage}%</span>
+                        <span className="ml-2 text-[10px] text-gray-400">{item.completion_percentage}%</span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-center text-gray-300">
+                    <td className="py-2 px-3 text-center text-gray-300 text-xs">
                       {item.due_date ? new Date(item.due_date).toLocaleDateString() : '-'}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-3">
                       <div className="flex justify-center">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getRiskBadgeClass(item.risk_status)}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getRiskBadgeClass(item.risk_status)}`}>
                           {item.risk_status}
                         </span>
                       </div>
@@ -257,11 +258,12 @@ const DashboardPage = () => {
 
             {filteredProduction.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>No production orders found</p>
+                <Package className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No production orders found</p>
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>
