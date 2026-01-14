@@ -1,0 +1,142 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Navbar from '@/components/Navbar';
+import { salesOrdersAPI, customersAPI, partNumbersAPI } from '@/lib/api';
+import { SalesOrder } from '@/lib/types';
+import { Plus, Search, Eye } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+const SalesOrdersPage = () => {
+  const router = useRouter();
+  const [orders, setOrders] = useState<SalesOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+    loadOrders();
+  }, [router]);
+
+  const loadOrders = async () => {
+    try {
+      const data = await salesOrdersAPI.getAll();
+      setOrders(data);
+    } catch (error) {
+      toast.error('Failed to load sales orders');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredOrders = orders.filter(order =>
+    order.po_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    order.customer?.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'Open': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'Partial': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+      case 'Completed': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'Cancelled': return 'bg-red-500/20 text-red-400 border-red-500/30';
+      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+    }
+  };
+
+  return (
+    <div className="min-h-screen">
+      <Navbar />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold gold-text mb-2">Sales Orders</h1>
+            <p className="text-gray-400">Customer Purchase Orders</p>
+          </div>
+          <button className="btn-aurexia flex items-center space-x-2">
+            <Plus className="w-5 h-5" />
+            <span>New Order</span>
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search by PO number or customer..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+            />
+          </div>
+        </div>
+
+        {/* Orders Table */}
+        <div className="card-aurexia p-6">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-yellow-500/20">
+                  <th className="text-left py-3 px-4 text-gray-400 font-medium">PO Number</th>
+                  <th className="text-left py-3 px-4 text-gray-400 font-medium">Customer</th>
+                  <th className="text-center py-3 px-4 text-gray-400 font-medium">Order Date</th>
+                  <th className="text-center py-3 px-4 text-gray-400 font-medium">Due Date</th>
+                  <th className="text-center py-3 px-4 text-gray-400 font-medium">Items</th>
+                  <th className="text-center py-3 px-4 text-gray-400 font-medium">Status</th>
+                  <th className="text-center py-3 px-4 text-gray-400 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredOrders.map((order) => (
+                  <tr key={order.id} className="border-b border-gray-800 hover:bg-yellow-500/5">
+                    <td className="py-3 px-4 text-gray-200 font-medium">{order.po_number}</td>
+                    <td className="py-3 px-4 text-gray-300">{order.customer?.name || '-'}</td>
+                    <td className="py-3 px-4 text-center text-gray-300">
+                      {new Date(order.order_date).toLocaleDateString()}
+                    </td>
+                    <td className="py-3 px-4 text-center text-gray-300">
+                      {new Date(order.due_date).toLocaleDateString()}
+                    </td>
+                    <td className="py-3 px-4 text-center text-gray-200">
+                      {order.items?.length || 0}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex justify-center">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadgeClass(order.status)}`}>
+                          {order.status}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex justify-center space-x-2">
+                        <button className="p-2 hover:bg-yellow-500/10 rounded-lg text-gray-400 hover:text-yellow-400">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {filteredOrders.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <p>No sales orders found</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SalesOrdersPage;

@@ -1,0 +1,150 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { authAPI } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
+import toast from 'react-hot-toast';
+import Image from 'next/image';
+
+const LoginPage = () => {
+    const router = useRouter();
+    const setAuth = useAuthStore((state) => state.setAuth);
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            console.log("=== LOGIN ATTEMPT START ===");
+            console.log("Username:", username);
+            console.log("Password length:", password.length);
+            
+            // Step 1: Login and get token
+            console.log("Step 1: Calling login API...");
+            const tokenData = await authAPI.login(username, password);
+            console.log('✓ Login successful, token received:', tokenData);
+
+            // Step 2: Store token in localStorage first
+            console.log("Step 2: Storing token in localStorage...");
+            localStorage.setItem('auth_token', tokenData.access_token);
+            console.log('✓ Token stored. Token starts with:', tokenData.access_token.substring(0, 20));
+
+            // Step 3: Fetch user data - the interceptor will add the token from localStorage
+            console.log("Step 3: Fetching user data...");
+            const userData = await authAPI.getCurrentUser();
+            console.log('✓ User data fetched:', userData);
+
+            // Step 4: Update store with user and token
+            console.log("Step 4: Updating auth store...");
+            setAuth(userData, tokenData.access_token);
+            console.log('✓ Auth store updated');
+
+            console.log("=== LOGIN SUCCESS ===");
+            toast.success('Login successful!');
+            router.push('/dashboard');
+        } catch (error: any) {
+            console.error('=== LOGIN ERROR ===');
+            console.error('Error object:', error);
+            console.error('Error response:', error.response);
+            console.error('Error response data:', error.response?.data);
+            console.error('Error message:', error.message);
+            console.error('Full error details:', JSON.stringify(error, null, 2));
+            
+            const errorMessage = error.response?.data?.detail || error.message || 'Login failed';
+            toast.error(errorMessage);
+            
+            // Clear any partial data on error
+            localStorage.removeItem('auth_token');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center px-4">
+            <div className="max-w-md w-full">
+                {/* Logo and Title */}
+                <div className="text-center mb-8">
+                    <div className="flex justify-center mb-4">
+                        <Image
+                            src="/logo.PNG"
+                            alt="Aurexia"
+                            width={80}
+                            height={80}
+                            className="brightness-110"
+                        />
+                    </div>
+                    <h1 className="text-4xl font-bold gold-text mb-2">AUREXIA</h1>
+                    <p className="text-gray-400">Enterprise Resource Planning</p>
+                </div>
+
+                {/* Login Form */}
+                <div className="card-aurexia p-8">
+                    <h2 className="text-2xl font-bold text-center mb-6 text-gray-100">
+                        Login
+                    </h2>
+
+                    <form onSubmit={handleLogin} className="space-y-6">
+                        <div>
+                            <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+                                Username
+                            </label>
+                            <input
+                                id="username"
+                                type="text"
+                                value={username}
+                                onChange={(e) => {
+                                    setUsername(e.target.value);
+                                }}
+                                required
+                                className="w-full px-4 py-3 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                                placeholder="supervisor_aurexia"
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                                Password
+                            </label>
+                            <input
+                                id="password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => {
+                                    setPassword(e.target.value);
+                                }}
+                                required
+                                className="w-full px-4 py-3 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                                placeholder="••••••••••"
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full btn-aurexia py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? 'Logging in...' : 'INGRESAR'}
+                        </button>
+                    </form>
+
+                    <p className="mt-6 text-center text-sm text-gray-400">
+                        ¿Olvidaste tu contraseña?
+                    </p>
+                </div>
+
+                {/* Footer Text */}
+                <div className="mt-8 text-center text-xs text-gray-500">
+                    <p>Traceability &amp; Real-Time Monitoring</p>
+                    <p className="mt-2">MOAB / DIY /</p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default LoginPage;
