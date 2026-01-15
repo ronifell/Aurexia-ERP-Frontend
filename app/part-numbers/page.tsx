@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/components/Navbar';
 import PageModal from '@/components/PageModal';
 import { partNumbersAPI } from '@/lib/api';
 import { PartNumber } from '@/lib/types';
@@ -43,11 +42,8 @@ const PartNumbersPage = () => {
 
   return (
     <PageModal>
-      <div className="h-full overflow-hidden flex flex-col">
-        <Navbar />
-        
-        <div className="flex-1 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full flex flex-col">
+      <div className="h-full overflow-hidden flex flex-col px-4">
+          <div className="mx-auto py-4 h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold gold-text mb-1">Part Numbers</h1>
@@ -121,7 +117,6 @@ const PartNumbersPage = () => {
                 </div>
               )}
             </div>
-          </div>
           </div>
         </div>
       </div>

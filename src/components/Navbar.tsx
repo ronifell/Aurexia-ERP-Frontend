@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { 
   LayoutDashboard, 
@@ -18,8 +18,8 @@ import {
 import Image from 'next/image';
 
 const Navbar = () => {
-  const pathname = usePathname();
   const router = useRouter();
+  const pathname = usePathname();
   const { user, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
@@ -36,48 +36,53 @@ const Navbar = () => {
     { name: 'QR Scanner', href: '/qr-scanner', icon: QrCode },
   ];
 
+  // Debug: Log user data
+  React.useEffect(() => {
+    console.log('=== NAVBAR DEBUG ===');
+    console.log('User:', user);
+    console.log('Role name:', user?.role?.name);
+    console.log('===================');
+  }, [user]);
+
   if (user?.role?.name === 'Admin' || user?.role?.name === 'Management') {
     navigation.push({ name: 'Users', href: '/users', icon: Users });
   }
 
   return (
-    <nav className="bg-black/20 backdrop-blur-md border-b border-yellow-500/30 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center">
+    <nav className="bg-transparent border-b border-yellow-500/30 flex">
+      {/* Logo Section - Fixed width to align with sidebar */}
+      <div className="hidden md:flex items-center justify-center w-64 border-r border-yellow-500/15">
+        <Link href="/dashboard">
+          <Image 
+            src="/logo.PNG" 
+            alt="Aurexia" 
+            width={60} 
+            height={60}
+            className="brightness-110"
+          />
+        </Link>
+      </div>
+
+      {/* Main Navbar Content */}
+      <div className="flex-1 px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-20">
+          {/* Logo Name - Mobile only */}
+          <div className="flex items-center md:hidden">
             <Link href="/dashboard" className="flex items-center space-x-3">
               <Image 
                 src="/logo.PNG" 
                 alt="Aurexia" 
-                width={40} 
-                height={40}
+                width={60} 
+                height={60}
                 className="brightness-110"
               />
               <span className="text-2xl font-bold gold-text">AUREXIA</span>
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-4">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                    isActive
-                      ? 'bg-yellow-500/20 text-yellow-400'
-                      : 'text-gray-300 hover:bg-yellow-500/10 hover:text-yellow-400'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{item.name}</span>
-                </Link>
-              );
-            })}
+          {/* Desktop: Page title or empty space */}
+          <div className="hidden md:flex items-center">
+            <span className="text-2xl font-bold gold-text">AUREXIA</span>
           </div>
 
           {/* User Menu */}
@@ -107,7 +112,7 @@ const Navbar = () => {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-yellow-500/20 bg-black/30 backdrop-blur-md">
+        <div className="md:hidden border-t border-yellow-500/20 bg-transparent">
           <div className="px-2 pt-2 pb-3 space-y-1">
             {navigation.map((item) => {
               const Icon = item.icon;

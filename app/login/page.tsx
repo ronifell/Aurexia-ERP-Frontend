@@ -45,7 +45,17 @@ const LoginPage = () => {
             console.log('✓ Auth store updated');
 
             console.log("=== LOGIN SUCCESS ===");
-            toast.success('Login successful!');
+            
+            // Show success notification
+            toast.success('Login successful!', {
+                duration: 3000,
+                style: {
+                    background: '#1a1a1a',
+                    color: '#fff',
+                    border: '1px solid rgba(34, 197, 94, 0.5)',
+                },
+            });
+            
             router.push('/dashboard');
         } catch (error: any) {
             console.error('=== LOGIN ERROR ===');
@@ -53,10 +63,20 @@ const LoginPage = () => {
             console.error('Error response:', error.response);
             console.error('Error response data:', error.response?.data);
             console.error('Error message:', error.message);
-            console.error('Full error details:', JSON.stringify(error, null, 2));
             
-            const errorMessage = error.response?.data?.detail || error.message || 'Login failed';
-            toast.error(errorMessage);
+            // Extract error message from API response
+            const errorMessage = error.response?.data?.detail || error.message || 'Login failed. Please try again.';
+            console.log('Showing error notification:', errorMessage);
+            
+            // Show error notification (snackbar)
+            toast.error(errorMessage, {
+                duration: 4000,
+                style: {
+                    background: '#1a1a1a',
+                    color: '#fff',
+                    border: '1px solid rgba(239, 68, 68, 0.6)',
+                },
+            });
             
             // Clear any partial data on error
             localStorage.removeItem('auth_token');
@@ -66,7 +86,7 @@ const LoginPage = () => {
     };
 
     return (
-        <PageModal>
+        <PageModal showSidebar={false}>
             <div className="h-full flex items-center justify-center px-4">
                 <div className="max-w-md w-full">
                     {/* Logo and Title */}
@@ -75,8 +95,8 @@ const LoginPage = () => {
                             <Image
                                 src="/logo.PNG"
                                 alt="Aurexia"
-                                width={80}
-                                height={80}
+                                width={100}
+                                height={100}
                                 className="brightness-110"
                             />
                         </div>

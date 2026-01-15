@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useMemo, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/components/Navbar';
 import PageModal from '@/components/PageModal';
 import { dashboardAPI } from '@/lib/api';
 import { DashboardStats, ProductionDashboardItem } from '@/lib/types';
@@ -16,15 +15,17 @@ import {
   Package
 } from 'lucide-react';
 
-// Lazy load Recharts components
-const BarChart = lazy(() => import('recharts').then(mod => ({ default: mod.BarChart })));
-const Bar = lazy(() => import('recharts').then(mod => ({ default: mod.Bar })));
-const XAxis = lazy(() => import('recharts').then(mod => ({ default: mod.XAxis })));
-const YAxis = lazy(() => import('recharts').then(mod => ({ default: mod.YAxis })));
-const CartesianGrid = lazy(() => import('recharts').then(mod => ({ default: mod.CartesianGrid })));
-const Tooltip = lazy(() => import('recharts').then(mod => ({ default: mod.Tooltip })));
-const Legend = lazy(() => import('recharts').then(mod => ({ default: mod.Legend })));
-const ResponsiveContainer = lazy(() => import('recharts').then(mod => ({ default: mod.ResponsiveContainer })));
+// Import Recharts components directly (lazy loading entire module causes type issues)
+import { 
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 
 const DashboardPage = () => {
   const router = useRouter();
@@ -125,11 +126,8 @@ const DashboardPage = () => {
 
   return (
     <PageModal>
-      <div className="h-full overflow-hidden flex flex-col">
-        <Navbar />
-        
-        <div className="flex-1 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full flex flex-col">
+      <div className="h-full overflow-hidden flex flex-col px-4">
+          <div className="mx-auto py-4 h-full flex flex-col">
           {/* Header */}
           <div className="mb-4">
             <h1 className="text-2xl font-bold gold-text mb-1">MOAB - Supervision Dashboard</h1>
@@ -350,8 +348,7 @@ const DashboardPage = () => {
             )}
           </div>
         </div>
-          </div>
-        </div>
+      </div>
       </div>
     </PageModal>
   );
