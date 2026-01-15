@@ -10,7 +10,8 @@ import {
   ShoppingCart, 
   Factory, 
   QrCode, 
-  Users
+  Users,
+  Building2
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -30,6 +31,7 @@ const Sidebar = () => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Sales Orders', href: '/sales-orders', icon: ShoppingCart },
+    { name: 'Customers', href: '/customers', icon: Building2 },
     { name: 'Production', href: '/production', icon: Factory },
     { name: 'Part Numbers', href: '/part-numbers', icon: Package },
     { name: 'QR Scanner', href: '/qr-scanner', icon: QrCode },
