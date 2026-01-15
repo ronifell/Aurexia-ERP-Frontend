@@ -72,8 +72,8 @@ const ProductionPage = () => {
 
   return (
     <PageModal>
-      <div className="h-full overflow-hidden flex flex-col px-4">
-          <div className="mx-auto py-4 h-full flex flex-col">
+      <div className="h-full overflow-hidden flex flex-col px-6">
+          <div className="w-full py-4 h-full flex flex-col max-w-[2000px] mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold gold-text mb-1">Production Orders</h1>
@@ -100,10 +100,10 @@ const ProductionPage = () => {
           </div>
 
           {/* Orders Table */}
-          <div className="card-aurexia p-4 flex-1 flex flex-col min-h-0">
-            <div className="overflow-auto flex-1">
+          <div className="card-aurexia p-4 flex-1 min-h-0 relative">
+            <div className="absolute inset-0 p-4 overflow-x-auto overflow-y-hidden">
               <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-black/50 backdrop-blur-sm">
+                <thead className="bg-black/50 backdrop-blur-sm">
                   <tr className="border-b border-yellow-500/20">
                     <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">PO Number</th>
                     <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Part Number</th>
@@ -116,51 +116,53 @@ const ProductionPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredOrders.map((order) => (
-                    <tr key={order.id} className="border-b border-gray-800 hover:bg-yellow-500/5">
-                      <td className="py-2 px-3 text-gray-200 font-medium text-xs">{order.po_number}</td>
-                      <td className="py-2 px-3 text-gray-300 text-xs">{order.part_number?.part_number || '-'}</td>
-                      <td className="py-2 px-3 text-center text-gray-200 text-xs">{order.quantity}</td>
-                      <td className="py-2 px-3 text-center text-green-400 text-xs">{order.quantity_completed}</td>
-                      <td className="py-2 px-3 text-center text-red-400 text-xs">{order.quantity_scrapped}</td>
-                      <td className="py-2 px-3">
-                        <div className="flex justify-center">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getPriorityBadgeClass(order.priority)}`}>
-                            {order.priority}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-2 px-3">
-                        <div className="flex justify-center">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getStatusBadgeClass(order.status)}`}>
-                            {order.status}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-2 px-3">
-                        <div className="flex justify-center space-x-1">
-                          <button
-                            onClick={() => handleGenerateTravelSheet(order.id)}
-                            className="p-1.5 hover:bg-yellow-500/10 rounded-lg text-gray-400 hover:text-yellow-400"
-                            title="Generate Travel Sheet"
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                          </button>
-                          <button className="p-1.5 hover:bg-yellow-500/10 rounded-lg text-gray-400 hover:text-yellow-400">
-                            <Eye className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                  {filteredOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="text-center py-8 text-gray-500">
+                        <p className="text-sm">No production orders found</p>
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    filteredOrders.map((order) => (
+                      <tr key={order.id} className="border-b border-gray-800 hover:bg-yellow-500/5">
+                        <td className="py-2 px-3 text-gray-200 font-medium text-xs">{order.po_number}</td>
+                        <td className="py-2 px-3 text-gray-300 text-xs">{order.part_number?.part_number || '-'}</td>
+                        <td className="py-2 px-3 text-center text-gray-200 text-xs">{order.quantity}</td>
+                        <td className="py-2 px-3 text-center text-green-400 text-xs">{order.quantity_completed}</td>
+                        <td className="py-2 px-3 text-center text-red-400 text-xs">{order.quantity_scrapped}</td>
+                        <td className="py-2 px-3">
+                          <div className="flex justify-center">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getPriorityBadgeClass(order.priority)}`}>
+                              {order.priority}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-2 px-3">
+                          <div className="flex justify-center">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getStatusBadgeClass(order.status)}`}>
+                              {order.status}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-2 px-3">
+                          <div className="flex justify-center space-x-1">
+                            <button
+                              onClick={() => handleGenerateTravelSheet(order.id)}
+                              className="p-1.5 hover:bg-yellow-500/10 rounded-lg text-gray-400 hover:text-yellow-400"
+                              title="Generate Travel Sheet"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                            </button>
+                            <button className="p-1.5 hover:bg-yellow-500/10 rounded-lg text-gray-400 hover:text-yellow-400">
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
-
-              {filteredOrders.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <p className="text-sm">No production orders found</p>
-                </div>
-              )}
             </div>
           </div>
         </div>

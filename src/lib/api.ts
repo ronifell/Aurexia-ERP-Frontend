@@ -257,3 +257,11 @@ export const usersAPI = {
     return response.data;
   },
 };
+
+// Processes API
+export const processesAPI = {
+  getAll: async () => {
+    const response = await api.get('/processes/');
+    return response.data;
+  },
+};

@@ -126,8 +126,8 @@ const DashboardPage = () => {
 
   return (
     <PageModal>
-      <div className="h-full overflow-hidden flex flex-col px-4">
-          <div className="mx-auto py-4 h-full flex flex-col">
+      <div className="h-full overflow-hidden flex flex-col px-6">
+          <div className="w-full py-4 h-full flex flex-col max-w-[2000px] mx-auto">
           {/* Header */}
           <div className="mb-4">
             <h1 className="text-2xl font-bold gold-text mb-1">MOAB - Supervision Dashboard</h1>
@@ -244,7 +244,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Production Orders Table */}
-        <div className="card-aurexia p-4 flex-1 flex flex-col min-h-0">
+        <div className="card-aurexia p-4 flex-1 min-h-0 relative">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-200">Production Orders</h3>
             {filterRisk && (
@@ -257,9 +257,9 @@ const DashboardPage = () => {
             )}
           </div>
 
-          <div className="overflow-auto flex-1">
+          <div className="absolute inset-0 pt-12 px-4 pb-16 overflow-x-auto overflow-y-hidden">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-black/50 backdrop-blur-sm">
+              <thead className="bg-black/50 backdrop-blur-sm">
                 <tr className="border-b border-yellow-500/20">
                   <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">PO Number</th>
                   <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Customer</th>
@@ -318,10 +318,12 @@ const DashboardPage = () => {
                 <p className="text-sm">No production orders found</p>
               </div>
             )}
+          </div>
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-800">
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 bg-gradient-to-t from-black/80 to-transparent">
+              <div className="flex items-center justify-between pt-3 border-t border-gray-800">
                 <div className="text-xs text-gray-400">
                   Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredProduction.length)} of {filteredProduction.length} orders
                 </div>
@@ -345,10 +347,10 @@ const DashboardPage = () => {
                   </button>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      </div>
+        </div>
       </div>
     </PageModal>
   );
