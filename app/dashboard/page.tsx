@@ -207,8 +207,8 @@ const DashboardPage = () => {
                       contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #D4AF37', fontSize: '12px' }}
                     />
                     <Legend wrapperStyle={{ fontSize: '12px' }} />
-                    <Bar dataKey="good" fill="#22c55e" name="Good" />
-                    <Bar dataKey="scrap" fill="#ef4444" name="Scrap" />
+                    <Bar dataKey="good" fill="#22c55e" name="Good" activeBar={{ fill: '#22c55e', opacity: 0.8 }} />
+                    <Bar dataKey="scrap" fill="#ef4444" name="Scrap" activeBar={{ fill: '#ef4444', opacity: 0.8 }} />
                   </BarChart>
                 </ResponsiveContainer>
               </Suspense>
@@ -233,9 +233,9 @@ const DashboardPage = () => {
                       contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #D4AF37', fontSize: '12px' }}
                     />
                     <Legend wrapperStyle={{ fontSize: '12px' }} />
-                    <Bar dataKey="pending" stackId="a" fill="#eab308" name="Pending" />
-                    <Bar dataKey="in_progress" stackId="a" fill="#3b82f6" name="In Progress" />
-                    <Bar dataKey="completed" stackId="a" fill="#22c55e" name="Completed" />
+                    <Bar dataKey="pending" stackId="a" fill="#eab308" name="Pending" activeBar={{ fill: '#eab308', opacity: 0.8 }} />
+                    <Bar dataKey="in_progress" stackId="a" fill="#3b82f6" name="In Progress" activeBar={{ fill: '#3b82f6', opacity: 0.8 }} />
+                    <Bar dataKey="completed" stackId="a" fill="#22c55e" name="Completed" activeBar={{ fill: '#22c55e', opacity: 0.8 }} />
                   </BarChart>
                 </ResponsiveContainer>
               </Suspense>
