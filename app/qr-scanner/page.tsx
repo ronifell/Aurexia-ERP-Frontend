@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import PageModal from '@/components/PageModal';
 import { qrScannerAPI } from '@/lib/api';
 import { QrCode, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -87,11 +88,12 @@ const QRScannerPage = () => {
   };
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col">
-      <Navbar />
-      
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <PageModal>
+      <div className="h-full overflow-hidden flex flex-col">
+        <Navbar />
+        
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="mb-6 text-center">
             <div className="flex justify-center mb-3">
               <div className="p-3 bg-yellow-500/10 rounded-full">
@@ -284,9 +286,10 @@ const QRScannerPage = () => {
             <li>6. Add any notes or comments and submit</li>
           </ol>
         </div>
+          </div>
         </div>
       </div>
-    </div>
+    </PageModal>
   );
 };
 

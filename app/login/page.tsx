@@ -6,6 +6,7 @@ import { authAPI } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import PageModal from '@/components/PageModal';
 
 const LoginPage = () => {
     const router = useRouter();
@@ -65,85 +66,87 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center px-4">
-            <div className="max-w-md w-full">
-                {/* Logo and Title */}
-                <div className="text-center mb-8">
-                    <div className="flex justify-center mb-4">
-                        <Image
-                            src="/logo.PNG"
-                            alt="Aurexia"
-                            width={80}
-                            height={80}
-                            className="brightness-110"
-                        />
+        <PageModal>
+            <div className="h-full flex items-center justify-center px-4">
+                <div className="max-w-md w-full">
+                    {/* Logo and Title */}
+                    <div className="text-center mb-8">
+                        <div className="flex justify-center mb-4">
+                            <Image
+                                src="/logo.PNG"
+                                alt="Aurexia"
+                                width={80}
+                                height={80}
+                                className="brightness-110"
+                            />
+                        </div>
+                        <h1 className="text-4xl font-bold gold-text mb-2">AUREXIA</h1>
+                        <p className="text-gray-400">Enterprise Resource Planning</p>
                     </div>
-                    <h1 className="text-4xl font-bold gold-text mb-2">AUREXIA</h1>
-                    <p className="text-gray-400">Enterprise Resource Planning</p>
-                </div>
 
-                {/* Login Form */}
-                <div className="card-aurexia p-8">
-                    <h2 className="text-2xl font-bold text-center mb-6 text-gray-100">
-                        Login
-                    </h2>
+                    {/* Login Form */}
+                    <div className="card-aurexia p-8">
+                        <h2 className="text-2xl font-bold text-center mb-6 text-gray-100">
+                            Login
+                        </h2>
 
-                    <form onSubmit={handleLogin} className="space-y-6">
-                        <div>
-                            <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
-                                Username
-                            </label>
-                            <input
-                                id="username"
-                                type="text"
-                                value={username}
-                                onChange={(e) => {
-                                    setUsername(e.target.value);
-                                }}
-                                required
-                                className="w-full px-4 py-3 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
-                                placeholder="supervisor_aurexia"
-                            />
-                        </div>
+                        <form onSubmit={handleLogin} className="space-y-6">
+                            <div>
+                                <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+                                    Username
+                                </label>
+                                <input
+                                    id="username"
+                                    type="text"
+                                    value={username}
+                                    onChange={(e) => {
+                                        setUsername(e.target.value);
+                                    }}
+                                    required
+                                    className="w-full px-4 py-3 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                                    placeholder="supervisor_aurexia"
+                                />
+                            </div>
 
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                                Password
-                            </label>
-                            <input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => {
-                                    setPassword(e.target.value);
-                                }}
-                                required
-                                className="w-full px-4 py-3 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
-                                placeholder="••••••••••"
-                            />
-                        </div>
+                            <div>
+                                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                                    Password
+                                </label>
+                                <input
+                                    id="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                    }}
+                                    required
+                                    className="w-full px-4 py-3 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                                    placeholder="••••••••••"
+                                />
+                            </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full btn-aurexia py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {loading ? 'Logging in...' : 'INGRESAR'}
-                        </button>
-                    </form>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full btn-aurexia py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {loading ? 'Logging in...' : 'INGRESAR'}
+                            </button>
+                        </form>
 
-                    <p className="mt-6 text-center text-sm text-gray-400">
-                        ¿Olvidaste tu contraseña?
-                    </p>
-                </div>
+                        <p className="mt-6 text-center text-sm text-gray-400">
+                            ¿Olvidaste tu contraseña?
+                        </p>
+                    </div>
 
-                {/* Footer Text */}
-                <div className="mt-8 text-center text-xs text-gray-500">
-                    <p>Traceability &amp; Real-Time Monitoring</p>
-                    <p className="mt-2">MOAB / DIY /</p>
+                    {/* Footer Text */}
+                    <div className="mt-8 text-center text-xs text-gray-500">
+                        <p>Traceability &amp; Real-Time Monitoring</p>
+                        <p className="mt-2">MOAB / DIY /</p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </PageModal>
     );
 };
 

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import PageModal from '@/components/PageModal';
 import { productionOrdersAPI } from '@/lib/api';
 import { ProductionOrder } from '@/lib/types';
 import { Plus, Search, FileText, Eye } from 'lucide-react';
@@ -71,11 +72,12 @@ const ProductionPage = () => {
   };
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col">
-      <Navbar />
-      
-      <div className="flex-1 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full flex flex-col">
+    <PageModal>
+      <div className="h-full overflow-hidden flex flex-col">
+        <Navbar />
+        
+        <div className="flex-1 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold gold-text mb-1">Production Orders</h1>
@@ -165,9 +167,10 @@ const ProductionPage = () => {
               )}
             </div>
           </div>
+          </div>
         </div>
       </div>
-    </div>
+    </PageModal>
   );
 };
 

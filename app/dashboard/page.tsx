@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import PageModal from '@/components/PageModal';
 import { dashboardAPI } from '@/lib/api';
 import { DashboardStats, ProductionDashboardItem } from '@/lib/types';
 import { 
@@ -14,7 +15,16 @@ import {
   Calendar,
   Package
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+// Lazy load Recharts components
+const BarChart = lazy(() => import('recharts').then(mod => ({ default: mod.BarChart })));
+const Bar = lazy(() => import('recharts').then(mod => ({ default: mod.Bar })));
+const XAxis = lazy(() => import('recharts').then(mod => ({ default: mod.XAxis })));
+const YAxis = lazy(() => import('recharts').then(mod => ({ default: mod.YAxis })));
+const CartesianGrid = lazy(() => import('recharts').then(mod => ({ default: mod.CartesianGrid })));
+const Tooltip = lazy(() => import('recharts').then(mod => ({ default: mod.Tooltip })));
+const Legend = lazy(() => import('recharts').then(mod => ({ default: mod.Legend })));
+const ResponsiveContainer = lazy(() => import('recharts').then(mod => ({ default: mod.ResponsiveContainer })));
 
 const DashboardPage = () => {
   const router = useRouter();
@@ -23,6 +33,7 @@ const DashboardPage = () => {
   const [workCenterLoad, setWorkCenterLoad] = useState<any[]>([]);
   const [dailyProduction, setDailyProduction] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chartsLoading, setChartsLoading] = useState(true);
   const [filterRisk, setFilterRisk] = useState<string>('');
 
   useEffect(() => {
@@ -33,27 +44,37 @@ const DashboardPage = () => {
     }
 
     loadDashboardData();
-    // Refresh every 30 seconds
-    const interval = setInterval(loadDashboardData, 30000);
+    // Refresh every 60 seconds (reduced from 30 for better performance)
+    const interval = setInterval(loadDashboardData, 60000);
     return () => clearInterval(interval);
   }, [router]);
 
   const loadDashboardData = async () => {
     try {
-      const [statsData, productionData, workCenterData, dailyData] = await Promise.all([
+      // Progressive loading: Load critical data first
+      const [statsData, productionData] = await Promise.all([
         dashboardAPI.getStats(),
         dashboardAPI.getProductionDashboard(),
-        dashboardAPI.getWorkCenterLoad(),
-        dashboardAPI.getDailyProduction(7),
       ]);
 
       setStats(statsData);
       setProduction(productionData);
-      setWorkCenterLoad(workCenterData);
-      setDailyProduction(dailyData);
+      setLoading(false);
+
+      // Load chart data separately (non-blocking)
+      Promise.all([
+        dashboardAPI.getWorkCenterLoad(),
+        dashboardAPI.getDailyProduction(7),
+      ]).then(([workCenterData, dailyData]) => {
+        setWorkCenterLoad(workCenterData);
+        setDailyProduction(dailyData);
+        setChartsLoading(false);
+      }).catch(error => {
+        console.error('Error loading charts:', error);
+        setChartsLoading(false);
+      });
     } catch (error) {
       console.error('Error loading dashboard:', error);
-    } finally {
       setLoading(false);
     }
   };
@@ -67,27 +88,48 @@ const DashboardPage = () => {
     }
   };
 
-  const filteredProduction = filterRisk
-    ? production.filter(item => item.risk_status === filterRisk)
-    : production;
+  // Memoize filtered and paginated production data
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  const filteredProduction = useMemo(() => {
+    return filterRisk
+      ? production.filter(item => item.risk_status === filterRisk)
+      : production;
+  }, [production, filterRisk]);
+
+  const paginatedProduction = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredProduction.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredProduction, currentPage]);
+
+  const totalPages = Math.ceil(filteredProduction.length / itemsPerPage);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterRisk]);
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
-          <p className="mt-4 text-gray-400">Loading dashboard...</p>
+      <PageModal>
+        <div className="h-full flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
+            <p className="mt-4 text-gray-400">Loading dashboard...</p>
+          </div>
         </div>
-      </div>
+      </PageModal>
     );
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col">
-      <Navbar />
-      
-      <div className="flex-1 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full flex flex-col">
+    <PageModal>
+      <div className="h-full overflow-hidden flex flex-col">
+        <Navbar />
+        
+        <div className="flex-1 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full flex flex-col">
           {/* Header */}
           <div className="mb-4">
             <h1 className="text-2xl font-bold gold-text mb-1">MOAB - Supervision Dashboard</h1>
@@ -152,38 +194,54 @@ const DashboardPage = () => {
           {/* Daily Production Chart */}
           <div className="card-aurexia p-4">
             <h3 className="text-sm font-semibold text-gray-200 mb-2">Daily Production (7 days)</h3>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={dailyProduction}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="date" stroke="#999" tick={{ fontSize: 11 }} />
-                <YAxis stroke="#999" tick={{ fontSize: 11 }} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #D4AF37', fontSize: '12px' }}
-                />
-                <Legend wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="good" fill="#22c55e" name="Good" />
-                <Bar dataKey="scrap" fill="#ef4444" name="Scrap" />
-              </BarChart>
-            </ResponsiveContainer>
+            {chartsLoading ? (
+              <div className="h-[180px] flex items-center justify-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-yellow-500"></div>
+              </div>
+            ) : (
+              <Suspense fallback={<div className="h-[180px] flex items-center justify-center"><div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-yellow-500"></div></div>}>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={dailyProduction}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                    <XAxis dataKey="date" stroke="#999" tick={{ fontSize: 11 }} />
+                    <YAxis stroke="#999" tick={{ fontSize: 11 }} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #D4AF37', fontSize: '12px' }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '12px' }} />
+                    <Bar dataKey="good" fill="#22c55e" name="Good" />
+                    <Bar dataKey="scrap" fill="#ef4444" name="Scrap" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Suspense>
+            )}
           </div>
 
           {/* Work Center Load Chart */}
           <div className="card-aurexia p-4">
             <h3 className="text-sm font-semibold text-gray-200 mb-2">Work Center Load</h3>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={workCenterLoad}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="work_center_name" stroke="#999" angle={-45} textAnchor="end" height={60} tick={{ fontSize: 10 }} />
-                <YAxis stroke="#999" tick={{ fontSize: 11 }} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #D4AF37', fontSize: '12px' }}
-                />
-                <Legend wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="pending" stackId="a" fill="#eab308" name="Pending" />
-                <Bar dataKey="in_progress" stackId="a" fill="#3b82f6" name="In Progress" />
-                <Bar dataKey="completed" stackId="a" fill="#22c55e" name="Completed" />
-              </BarChart>
-            </ResponsiveContainer>
+            {chartsLoading ? (
+              <div className="h-[180px] flex items-center justify-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-yellow-500"></div>
+              </div>
+            ) : (
+              <Suspense fallback={<div className="h-[180px] flex items-center justify-center"><div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-yellow-500"></div></div>}>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={workCenterLoad}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                    <XAxis dataKey="work_center_name" stroke="#999" angle={-45} textAnchor="end" height={60} tick={{ fontSize: 10 }} />
+                    <YAxis stroke="#999" tick={{ fontSize: 11 }} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #D4AF37', fontSize: '12px' }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '12px' }} />
+                    <Bar dataKey="pending" stackId="a" fill="#eab308" name="Pending" />
+                    <Bar dataKey="in_progress" stackId="a" fill="#3b82f6" name="In Progress" />
+                    <Bar dataKey="completed" stackId="a" fill="#22c55e" name="Completed" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Suspense>
+            )}
           </div>
         </div>
 
@@ -215,7 +273,7 @@ const DashboardPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredProduction.map((item) => (
+                {paginatedProduction.map((item) => (
                   <tr key={item.id} className="border-b border-gray-800 hover:bg-yellow-500/5">
                     <td className="py-2 px-3 text-gray-200 text-xs">{item.po_number}</td>
                     <td className="py-2 px-3 text-gray-300 text-xs">{item.customer_name || '-'}</td>
@@ -256,17 +314,46 @@ const DashboardPage = () => {
               </tbody>
             </table>
 
-            {filteredProduction.length === 0 && (
+            {paginatedProduction.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 <Package className="w-10 h-10 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No production orders found</p>
               </div>
             )}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-800">
+                <div className="text-xs text-gray-400">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredProduction.length)} of {filteredProduction.length} orders
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 text-xs rounded bg-black/30 border border-yellow-500/20 text-gray-300 hover:bg-yellow-500/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <div className="flex items-center px-3 text-xs text-gray-400">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 text-xs rounded bg-black/30 border border-yellow-500/20 text-gray-300 hover:bg-yellow-500/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+          </div>
         </div>
       </div>
-    </div>
+    </PageModal>
   );
 };
 

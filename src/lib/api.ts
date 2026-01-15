@@ -61,11 +61,7 @@ export const authAPI = {
   },
   
   getCurrentUser: async () => {
-    // Wait a bit to ensure token is stored
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
     const token = localStorage.getItem('auth_token');
-    console.log('[getCurrentUser] Token check:', token ? 'FOUND' : 'NOT FOUND');
     
     if (!token) {
       throw new Error('No authentication token found');

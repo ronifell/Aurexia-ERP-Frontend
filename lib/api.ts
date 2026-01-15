@@ -17,11 +17,8 @@ api.interceptors.request.use(
     // Only access localStorage on client side
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
-      console.log('[API Interceptor] Token from localStorage:', token ? `${token.substring(0, 20)}...` : 'NOT FOUND');
-      console.log('[API Interceptor] Request URL:', config.url);
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
-        console.log('[API Interceptor] Authorization header set');
       }
     }
     return config;
@@ -33,30 +30,14 @@ api.interceptors.request.use(
 
 // Response interceptor to handle errors
 api.interceptors.response.use(
-  (response) => {
-    console.log('[API Response Interceptor] Success:', response.config.url, 'Status:', response.status);
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error('[API Response Interceptor] Error:', {
-      url: error.config?.url,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      headers: error.response?.headers
-    });
-    
-    // Only clear token on 401 if we're not on the login page and the error is not from /api/auth/me during login
+    // Only clear token on 401 if we're not on the login page
     if (error.response?.status === 401) {
-      console.log('[API Response Interceptor] 401 Unauthorized detected');
-      // Don't clear token during login flow
       if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-        console.log('[API Response Interceptor] Clearing tokens and redirecting to login');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';
-      } else {
-        console.log('[API Response Interceptor] On login page, not clearing tokens');
       }
     }
     return Promise.reject(error);
@@ -83,38 +64,14 @@ export const authAPI: {
   },
   
   getCurrentUser: async () => {
-    console.log('[getCurrentUser] === START ===');
-    
-    // Wait a tick to ensure localStorage is updated
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Verify token exists
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    console.log('[getCurrentUser] Token retrieved:', token ? `${token.substring(0, 20)}...` : 'NOT FOUND');
-    console.log('[getCurrentUser] Token full length:', token?.length);
     
     if (!token) {
-      console.error('[getCurrentUser] ERROR: No token found!');
       throw new Error('No authentication token found');
     }
     
-    try {
-      console.log('[getCurrentUser] Making request to /api/auth/me...');
-      
-      // Use the api instance which has the interceptor that adds the Authorization header
-      const response = await api.get('/api/auth/me');
-      
-      console.log('[getCurrentUser] ✓ Success! User data received:', response.data);
-      console.log('[getCurrentUser] === END SUCCESS ===');
-      return response.data;
-    } catch (error: any) {
-      console.error('[getCurrentUser] === ERROR ===');
-      console.error('[getCurrentUser] Error details:', error);
-      console.error('[getCurrentUser] Error response:', error.response);
-      console.error('[getCurrentUser] Error status:', error.response?.status);
-      console.error('[getCurrentUser] Error data:', error.response?.data);
-      throw error;
-    }
+    const response = await api.get('/api/auth/me');
+    return response.data;
   },
   
   logout: () => {
