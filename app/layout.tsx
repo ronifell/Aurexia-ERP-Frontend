@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import ToasterProvider from "@/components/ToasterProvider";
+import SWRProvider from "@/components/SWRProvider";
+import NavigationHandler from "@/components/NavigationHandler";
 
 export const metadata: Metadata = {
   title: "Aurexia ERP - Manufacturing Excellence",
@@ -15,8 +17,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        {children}
-        <ToasterProvider />
+        <SWRProvider>
+          <NavigationHandler />
+          {children}
+          <ToasterProvider />
+        </SWRProvider>
       </body>
     </html>
   );

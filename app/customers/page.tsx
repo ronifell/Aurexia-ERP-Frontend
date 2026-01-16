@@ -4,14 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageModal from '@/components/PageModal';
 import { customersAPI } from '@/lib/api';
+import { useCustomers } from '@/lib/hooks';
 import { Customer } from '@/lib/types';
 import { Plus, Search, Edit, Trash2, Users, Mail, Phone, MapPin, Calendar, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const CustomersPage = () => {
   const router = useRouter();
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -25,24 +24,19 @@ const CustomersPage = () => {
     delivery_frequency: '',
   });
 
+  // Use SWR hook for optimized data fetching with caching
+  const { customers, isLoading: loading, refresh: refreshCustomers } = useCustomers();
+
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (!token) {
       router.push('/login');
       return;
     }
-    loadCustomers();
   }, [router]);
 
-  const loadCustomers = async () => {
-    try {
-      const data = await customersAPI.getAll();
-      setCustomers(data);
-    } catch (error) {
-      toast.error('Failed to load customers');
-    } finally {
-      setLoading(false);
-    }
+  const loadCustomers = () => {
+    refreshCustomers();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

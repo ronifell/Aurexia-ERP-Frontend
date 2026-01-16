@@ -4,149 +4,23 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageModal from '@/components/PageModal';
 import { ProductionOrder, PartNumber, SalesOrder, TravelSheet } from '@/lib/types';
-import { partNumbersAPI, salesOrdersAPI } from '@/lib/api';
+import { productionOrdersAPI } from '@/lib/api';
+import { useProductionOrders, usePartNumbers, useSalesOrders } from '@/lib/hooks';
 import { Plus, Search, FileText, Eye, Edit, Trash2, X, QrCode, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { QRCodeSVG } from 'qrcode.react';
+import dynamic from 'next/dynamic';
 
-const productionOrdersAPI = {
-  getAll: async (params?: any) => {
-    const token = localStorage.getItem('auth_token');
-    const queryString = params ? new URLSearchParams(params).toString() : '';
-    const url = queryString 
-      ? `/api/production-orders?${queryString}`
-      : '/api/production-orders';
-    
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw error;
-    }
-
-    return response.json();
-  },
-
-  getById: async (id: number) => {
-    const token = localStorage.getItem('auth_token');
-    const response = await fetch(`/api/production-orders/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw error;
-    }
-
-    return response.json();
-  },
-
-  create: async (data: any) => {
-    const token = localStorage.getItem('auth_token');
-    const response = await fetch('/api/production-orders', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw error;
-    }
-
-    return response.json();
-  },
-
-  update: async (id: number, data: any) => {
-    const token = localStorage.getItem('auth_token');
-    const response = await fetch(`/api/production-orders/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw error;
-    }
-
-    return response.json();
-  },
-
-  generateTravelSheet: async (id: number) => {
-    const token = localStorage.getItem('auth_token');
-    const response = await fetch(`/api/production-orders/${id}/generate-travel-sheet`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw error;
-    }
-
-    return response.json();
-  },
-
-  getTravelSheets: async (id: number) => {
-    const token = localStorage.getItem('auth_token');
-    const response = await fetch(`/api/production-orders/${id}/travel-sheets`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw error;
-    }
-
-    return response.json();
-  },
-
-  delete: async (id: number) => {
-    const token = localStorage.getItem('auth_token');
-    const response = await fetch(`/api/production-orders/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw error;
-    }
-
-    return response.json();
-  },
-};
+// Lazy load QR code component
+const QRCodeSVG = dynamic(() => import('qrcode.react').then(mod => mod.QRCodeSVG), {
+  ssr: false,
+  loading: () => <div className="w-[120px] h-[120px] bg-white rounded-lg animate-pulse" />
+});
 
 const ProductionPage = () => {
   const router = useRouter();
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [partNumbers, setPartNumbers] = useState<PartNumber[]>([]);
   const [salesOrders, setSalesOrders] = useState<SalesOrder[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingOrder, setEditingOrder] = useState<ProductionOrder | null>(null);
@@ -164,39 +38,29 @@ const ProductionPage = () => {
     status: 'Created',
   });
 
+  // Use SWR hooks for optimized data fetching with caching
+  const { orders: ordersData, isLoading: ordersLoading, refresh: refreshOrders } = useProductionOrders();
+  const { partNumbers: partNumbersData, isLoading: partNumbersLoading } = usePartNumbers();
+  const { orders: salesOrdersData, isLoading: salesOrdersLoading } = useSalesOrders();
+
+  const loading = ordersLoading || partNumbersLoading || salesOrdersLoading;
+
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (!token) {
       router.push('/login');
       return;
     }
-    loadData();
   }, [router]);
 
-  const loadData = async () => {
-    try {
-      const [ordersData, partNumbersData, salesOrdersData] = await Promise.all([
-        productionOrdersAPI.getAll(),
-        partNumbersAPI.getAll(),
-        salesOrdersAPI.getAll(),
-      ]);
-      setOrders(ordersData);
-      setPartNumbers(partNumbersData);
-      setSalesOrders(salesOrdersData);
-    } catch (error) {
-      toast.error('Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    if (ordersData) setOrders(ordersData);
+    if (partNumbersData) setPartNumbers(partNumbersData);
+    if (salesOrdersData) setSalesOrders(salesOrdersData);
+  }, [ordersData, partNumbersData, salesOrdersData]);
 
-  const loadOrders = async () => {
-    try {
-      const data = await productionOrdersAPI.getAll();
-      setOrders(data);
-    } catch (error) {
-      toast.error('Failed to load production orders');
-    }
+  const loadOrders = () => {
+    refreshOrders();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

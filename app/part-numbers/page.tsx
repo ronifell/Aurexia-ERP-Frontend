@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageModal from '@/components/PageModal';
-import { partNumbersAPI, customersAPI, processesAPI } from '@/lib/api';
+import { partNumbersAPI } from '@/lib/api';
+import { usePartNumbers, useCustomers, useProcesses } from '@/lib/hooks';
 import { PartNumber, Customer, Process } from '@/lib/types';
 import { Plus, Search, Eye, Trash2, ArrowUp, ArrowDown, X } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -16,10 +17,6 @@ interface RoutingFormData {
 
 const PartNumbersPage = () => {
   const router = useRouter();
-  const [partNumbers, setPartNumbers] = useState<PartNumber[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [processes, setProcesses] = useState<Process[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -31,30 +28,23 @@ const PartNumbersPage = () => {
   });
   const [routings, setRoutings] = useState<RoutingFormData[]>([]);
 
+  // Use SWR hooks for optimized data fetching with caching
+  const { partNumbers, isLoading: partNumbersLoading, refresh: refreshPartNumbers } = usePartNumbers();
+  const { customers, isLoading: customersLoading } = useCustomers();
+  const { processes, isLoading: processesLoading } = useProcesses();
+
+  const loading = partNumbersLoading || customersLoading || processesLoading;
+
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (!token) {
       router.push('/login');
       return;
     }
-    loadData();
   }, [router]);
 
-  const loadData = async () => {
-    try {
-      const [partNumbersData, customersData, processesData] = await Promise.all([
-        partNumbersAPI.getAll(),
-        customersAPI.getAll(),
-        processesAPI.getAll(),
-      ]);
-      setPartNumbers(partNumbersData);
-      setCustomers(customersData);
-      setProcesses(processesData);
-    } catch (error) {
-      toast.error('Failed to load data');
-    } finally {
-      setLoading(false);
-    }
+  const loadData = () => {
+    refreshPartNumbers();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -148,6 +138,19 @@ const PartNumbersPage = () => {
     pn.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     pn.customer?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <PageModal>
+        <div className="h-full flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
+            <p className="mt-4 text-gray-400">Loading part numbers...</p>
+          </div>
+        </div>
+      </PageModal>
+    );
+  }
 
   return (
     <PageModal>

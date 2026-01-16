@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageModal from '@/components/PageModal';
-import { salesOrdersAPI, customersAPI, partNumbersAPI, authAPI } from '@/lib/api';
+import { salesOrdersAPI } from '@/lib/api';
+import { useSalesOrders, useCustomers, usePartNumbers, useCurrentUser } from '@/lib/hooks';
 import { SalesOrder, Customer, PartNumber, User } from '@/lib/types';
 import { Plus, Search, Eye, Edit, Trash2, X, ShoppingCart, Calendar, Package } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -21,7 +22,6 @@ const SalesOrdersPage = () => {
   const [partNumbers, setPartNumbers] = useState<PartNumber[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [canViewPrices, setCanViewPrices] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -39,48 +39,35 @@ const SalesOrdersPage = () => {
     { part_number_id: 0, quantity: 1, unit_price: undefined }
   ]);
 
+  // Use SWR hooks for optimized data fetching with caching
+  const { orders: ordersData, isLoading: ordersLoading, refresh: refreshOrders } = useSalesOrders();
+  const { customers: customersData, isLoading: customersLoading } = useCustomers();
+  const { partNumbers: partNumbersData, isLoading: partNumbersLoading } = usePartNumbers();
+  const { user: userData, isLoading: userLoading } = useCurrentUser();
+
+  const loading = ordersLoading || customersLoading || partNumbersLoading || userLoading;
+
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (!token) {
       router.push('/login');
       return;
     }
-    loadData();
   }, [router]);
 
-  const loadData = async () => {
-    try {
-      const [ordersData, customersData, partNumbersData, userData] = await Promise.all([
-        salesOrdersAPI.getAll(),
-        customersAPI.getAll(),
-        partNumbersAPI.getAll(),
-        authAPI.getCurrentUser(),
-      ]);
-      setOrders(ordersData);
-      setCustomers(customersData);
-      setPartNumbers(partNumbersData);
+  useEffect(() => {
+    if (ordersData) setOrders(ordersData);
+    if (customersData) setCustomers(customersData);
+    if (partNumbersData) setPartNumbers(partNumbersData);
+    if (userData) {
       setCurrentUser(userData);
-      
-      // Check if user can view prices
       const hasPermission = userData?.role?.can_view_prices || false;
       setCanViewPrices(hasPermission);
-      
-      console.log('User role:', userData?.role?.name);
-      console.log('Can view prices:', hasPermission);
-    } catch (error) {
-      toast.error('Failed to load data');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [ordersData, customersData, partNumbersData, userData]);
 
-  const loadOrders = async () => {
-    try {
-      const data = await salesOrdersAPI.getAll();
-      setOrders(data);
-    } catch (error) {
-      toast.error('Failed to load sales orders');
-    }
+  const loadOrders = () => {
+    refreshOrders();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

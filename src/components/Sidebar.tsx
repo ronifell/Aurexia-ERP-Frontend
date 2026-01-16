@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
+import { useNavigationStore } from '@/lib/navigationStore';
 import { 
   LayoutDashboard, 
   Package, 
@@ -14,35 +15,27 @@ import {
   Building2
 } from 'lucide-react';
 
-const Sidebar = () => {
+const Sidebar = React.memo(() => {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useAuthStore();
+  const { setNavigating } = useNavigationStore();
 
-  // Debug logging
-  React.useEffect(() => {
-    console.log('=== SIDEBAR DEBUG ===');
-    console.log('User object:', user);
-    console.log('User role:', user?.role);
-    console.log('Role name:', user?.role?.name);
-    console.log('Should show Users:', user?.role?.name === 'Admin' || user?.role?.name === 'Management');
-    console.log('====================');
-  }, [user]);
+  const navigation = useMemo(() => {
+    const baseNav = [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Sales Orders', href: '/sales-orders', icon: ShoppingCart },
+      { name: 'Customers', href: '/customers', icon: Building2 },
+      { name: 'Production', href: '/production', icon: Factory },
+      { name: 'Part Numbers', href: '/part-numbers', icon: Package },
+      { name: 'QR Scanner', href: '/qr-scanner', icon: QrCode },
+    ];
 
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Sales Orders', href: '/sales-orders', icon: ShoppingCart },
-    { name: 'Customers', href: '/customers', icon: Building2 },
-    { name: 'Production', href: '/production', icon: Factory },
-    { name: 'Part Numbers', href: '/part-numbers', icon: Package },
-    { name: 'QR Scanner', href: '/qr-scanner', icon: QrCode },
-  ];
-
-  if (user?.role?.name === 'Admin' || user?.role?.name === 'Management') {
-    console.log('✓ Adding Users menu to sidebar');
-    navigation.push({ name: 'Users', href: '/users', icon: Users });
-  } else {
-    console.log('✗ NOT adding Users menu. Role:', user?.role?.name || 'undefined');
-  }
+    if (user?.role?.name === 'Admin' || user?.role?.name === 'Management') {
+      return [...baseNav, { name: 'Users', href: '/users', icon: Users }];
+    }
+    return baseNav;
+  }, [user?.role?.name]);
 
   return (
     <div className="hidden md:block w-64 border-r border-yellow-500/30 flex-shrink-0 overflow-y-auto">
@@ -55,6 +48,13 @@ const Sidebar = () => {
             <Link
               key={item.name}
               href={item.href}
+              prefetch={true}
+              onClick={() => {
+                // Show loading immediately on click
+                if (!isActive) {
+                  setNavigating(true);
+                }
+              }}
               className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
                 isActive
                   ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
@@ -69,6 +69,8 @@ const Sidebar = () => {
       </div>
     </div>
   );
-};
+});
+
+Sidebar.displayName = 'Sidebar';
 
 export default Sidebar;

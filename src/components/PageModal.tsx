@@ -13,7 +13,7 @@ interface PageModalProps {
  * PageModal - A large glass-morphism container that wraps all page content
  * Creates the signature Aurexia transparent modal effect seen in the UI
  */
-const PageModal: React.FC<PageModalProps> = ({ children, showSidebar = true }) => {
+const PageModal: React.FC<PageModalProps> = React.memo(({ children, showSidebar = true }) => {
   return (
     <div className="h-screen w-full flex items-center justify-center p-4 md:p-6">
       <div className="page-modal-container w-full h-full flex flex-col">
@@ -33,6 +33,8 @@ const PageModal: React.FC<PageModalProps> = ({ children, showSidebar = true }) =
       </div>
     </div>
   );
-};
+});
+
+PageModal.displayName = 'PageModal';
 
 export default PageModal;

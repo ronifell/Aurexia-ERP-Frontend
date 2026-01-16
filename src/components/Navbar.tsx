@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
+import { useNavigationStore } from '@/lib/navigationStore';
 import { 
   LayoutDashboard, 
   Package, 
@@ -17,10 +18,11 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 
-const Navbar = () => {
+const Navbar = React.memo(() => {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
+  const { setNavigating } = useNavigationStore();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const handleLogout = () => {
@@ -28,31 +30,33 @@ const Navbar = () => {
     router.push('/login');
   };
 
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Sales Orders', href: '/sales-orders', icon: ShoppingCart },
-    { name: 'Production', href: '/production', icon: Factory },
-    { name: 'Part Numbers', href: '/part-numbers', icon: Package },
-    { name: 'QR Scanner', href: '/qr-scanner', icon: QrCode },
-  ];
+  const navigation = useMemo(() => {
+    const baseNav = [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Sales Orders', href: '/sales-orders', icon: ShoppingCart },
+      { name: 'Production', href: '/production', icon: Factory },
+      { name: 'Part Numbers', href: '/part-numbers', icon: Package },
+      { name: 'QR Scanner', href: '/qr-scanner', icon: QrCode },
+    ];
 
-  // Debug: Log user data
-  React.useEffect(() => {
-    console.log('=== NAVBAR DEBUG ===');
-    console.log('User:', user);
-    console.log('Role name:', user?.role?.name);
-    console.log('===================');
-  }, [user]);
-
-  if (user?.role?.name === 'Admin' || user?.role?.name === 'Management') {
-    navigation.push({ name: 'Users', href: '/users', icon: Users });
-  }
+    if (user?.role?.name === 'Admin' || user?.role?.name === 'Management') {
+      return [...baseNav, { name: 'Users', href: '/users', icon: Users }];
+    }
+    return baseNav;
+  }, [user?.role?.name]);
 
   return (
     <nav className="bg-transparent border-b border-yellow-500/30 flex">
       {/* Logo Section - Fixed width to align with sidebar */}
       <div className="hidden md:flex items-center justify-center w-64 border-r border-yellow-500/15">
-        <Link href="/dashboard">
+        <Link 
+          href="/dashboard"
+          onClick={() => {
+            if (pathname !== '/dashboard') {
+              setNavigating(true);
+            }
+          }}
+        >
           <Image 
             src="/logo.PNG" 
             alt="Aurexia" 
@@ -68,7 +72,15 @@ const Navbar = () => {
         <div className="flex justify-between h-20">
           {/* Logo Name - Mobile only */}
           <div className="flex items-center md:hidden">
-            <Link href="/dashboard" className="flex items-center space-x-3">
+            <Link 
+              href="/dashboard" 
+              className="flex items-center space-x-3"
+              onClick={() => {
+                if (pathname !== '/dashboard') {
+                  setNavigating(true);
+                }
+              }}
+            >
               <Image 
                 src="/logo.PNG" 
                 alt="Aurexia" 
@@ -121,7 +133,13 @@ const Navbar = () => {
                 <Link
                   key={item.name}
                   href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
+                  prefetch={true}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    if (!isActive) {
+                      setNavigating(true);
+                    }
+                  }}
                   className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-base font-medium ${
                     isActive
                       ? 'bg-yellow-500/20 text-yellow-400'
@@ -138,6 +156,8 @@ const Navbar = () => {
       )}
     </nav>
   );
-};
+});
+
+Navbar.displayName = 'Navbar';
 
 export default Navbar;
