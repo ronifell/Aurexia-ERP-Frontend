@@ -166,3 +166,447 @@ table tbody tr:hover {
 .page-modal-container::before {
   display: none;
 }
+
+/* Hide print-only elements on screen */
+.print-header,
+.print-footer {
+  display: none;
+}
+
+/* Custom animations for travel sheet generation button */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(234, 179, 8, 0.1) 0%,
+    rgba(234, 179, 8, 0.3) 50%,
+    rgba(234, 179, 8, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* Print styles for travel sheets */
+@media print {
+  /* Page setup */
+  @page {
+    size: A4 portrait;
+    margin: 0.5cm 0.75cm;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html, body {
+    width: 210mm !important;
+    height: 297mm !important;
+  }
+
+  /* Reset body styles for print */
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  body::before {
+    display: none !important;
+  }
+  
+  /* Hide all elements by default */
+  body > * {
+    display: none !important;
+  }
+  
+  /* Show only the print modal */
+  .print-modal {
+    display: block !important;
+    position: static !important;
+    background: white !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    z-index: auto !important;
+    inset: auto !important;
+  }
+  
+  /* Style the print content */
+  .print-content {
+    background: white !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    min-height: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Hide buttons and non-essential elements */
+  .no-print,
+  .no-print-operations,
+  button {
+    display: none !important;
+  }
+
+  /* Ensure all main content is visible */
+  .print-modal * {
+    visibility: visible !important;
+  }
+
+  .no-print,
+  .no-print *,
+  .no-print-operations,
+  .no-print-operations *,
+  button,
+  button * {
+    visibility: hidden !important;
+    display: none !important;
+  }
+  
+  /* Print header styling - hide on screen, show in print */
+  .print-header {
+    display: block !important;
+    visibility: visible !important;
+    margin-bottom: 0.5rem !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    page-break-after: avoid !important;
+  }
+
+  .print-header .print-logo {
+    font-size: 1.75rem !important;
+    font-weight: bold !important;
+    letter-spacing: 0.3em !important;
+    color: #000 !important;
+    text-align: center !important;
+    font-family: Arial, sans-serif !important;
+    margin-bottom: 0.3rem !important;
+    margin-top: 0 !important;
+  }
+
+  .print-header .print-subtitle {
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: #000 !important;
+    text-align: center !important;
+    margin-top: 0.3rem !important;
+  }
+
+  .print-header .print-doc-type {
+    font-size: 0.625rem !important;
+    color: #444 !important;
+    text-align: center !important;
+    margin-top: 0.25rem !important;
+  }
+
+  .print-header-border {
+    border-bottom: 2px solid #000 !important;
+    padding-bottom: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  /* Print section styling */
+  .print-section {
+    background: white !important;
+    border: 3px solid #000 !important;
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+    page-break-after: avoid !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .print-section-title {
+    font-size: 1rem !important;
+    font-weight: bold !important;
+    color: #000 !important;
+    border-bottom: 2px solid #000 !important;
+    padding-bottom: 0.4rem !important;
+    margin-bottom: 0.75rem !important;
+    text-transform: uppercase !important;
+  }
+
+  /* Print field styling */
+  .print-field {
+    margin-bottom: 0.75rem !important;
+  }
+
+  .print-field-label {
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    text-transform: uppercase !important;
+    margin-bottom: 0.2rem !important;
+    display: block !important;
+    line-height: 1.2 !important;
+  }
+
+  .print-field-value {
+    font-size: 1rem !important;
+    font-weight: bold !important;
+    color: #000 !important;
+    display: block !important;
+    line-height: 1.3 !important;
+  }
+  
+  /* Style cards for print */
+  .card-aurexia {
+    background: white !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Travel sheet card */
+  .print-travel-sheet {
+    border: 3px solid #000 !important;
+    background: white !important;
+    padding: 1.25rem !important;
+    margin-bottom: 1rem !important;
+    page-break-before: auto !important;
+    page-break-after: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .print-sheet-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .print-sheet-number {
+    font-size: 1.5rem !important;
+    font-weight: bold !important;
+    color: #000 !important;
+    border-bottom: 3px solid #000 !important;
+    padding-bottom: 0.75rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .print-qr-main {
+    background: white !important;
+    border: 3px solid #000 !important;
+    padding: 0.75rem !important;
+    display: inline-block !important;
+  }
+
+  .print-qr-main svg {
+    width: 180px !important;
+    height: 180px !important;
+    display: block !important;
+  }
+
+  .print-qr-label {
+    font-size: 1rem !important;
+    font-weight: bold !important;
+    color: #000 !important;
+    text-align: center !important;
+    margin-top: 0.5rem !important;
+    display: block !important;
+  }
+
+  /* Operations - HIDE IN PRINT */
+  .print-operations-title {
+    display: none !important;
+  }
+
+  .print-operation {
+    display: none !important;
+  }
+
+  .print-operation-number {
+    display: none !important;
+  }
+
+  .print-operation-name {
+    display: none !important;
+  }
+
+  .print-operation-details {
+    display: none !important;
+  }
+
+  .print-operation-qr {
+    display: none !important;
+  }
+
+  /* Hide entire operations container */
+  .print-travel-sheet > div:last-child {
+    display: none !important;
+  }
+
+  /* Footer */
+  .print-footer {
+    display: block !important;
+    margin-top: 1rem !important;
+    padding-top: 0.75rem !important;
+    border-top: 2px solid #000 !important;
+  }
+
+  .print-footer-company {
+    font-weight: bold !important;
+    color: #000 !important;
+    font-size: 0.75rem !important;
+  }
+
+  .print-footer-timestamp {
+    font-size: 0.625rem !important;
+    color: #444 !important;
+    margin-top: 0.2rem !important;
+  }
+  
+  /* Ensure QR codes print clearly */
+  svg {
+    filter: contrast(100%) !important;
+    shape-rendering: crispEdges !important;
+  }
+  
+  /* Print-friendly colors */
+  .text-gray-100,
+  .text-gray-200,
+  .text-gray-300,
+  .text-gray-400 {
+    color: #000 !important;
+  }
+  
+  .text-yellow-400,
+  .gold-text {
+    color: #000 !important;
+    font-weight: bold !important;
+  }
+  
+  .text-blue-400 {
+    color: #000 !important;
+  }
+  
+  .text-green-400 {
+    color: #000 !important;
+  }
+  
+  .text-red-400 {
+    color: #000 !important;
+  }
+  
+  .text-gray-500 {
+    color: #666 !important;
+  }
+
+  .text-gray-700 {
+    color: #444 !important;
+  }
+
+  .text-gray-800 {
+    color: #333 !important;
+  }
+  
+  /* Simplify borders for print */
+  .border-yellow-500\/30,
+  .border-yellow-500\/20,
+  .border-blue-500\/30,
+  .border-green-500\/30,
+  .border-red-500\/30,
+  .border-gray-700,
+  .border-gray-800 {
+    border-color: #000 !important;
+  }
+  
+  /* Simplify backgrounds for print */
+  .bg-blue-500\/10,
+  .bg-black\/20,
+  .bg-black\/30,
+  .bg-yellow-500\/10,
+  .bg-green-500\/20,
+  .bg-red-500\/20,
+  .bg-gray-500\/20 {
+    background-color: #ffffff !important;
+  }
+
+  /* Status badges in print */
+  .print-section span[class*="inline-block"],
+  .print-travel-sheet span[class*="inline-block"] {
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.625rem !important;
+    border: 1px solid #000 !important;
+    background: white !important;
+    color: #000 !important;
+  }
+  
+  /* Page breaks */
+  .space-y-6 > div {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  
+  /* Ensure QR code containers have white background */
+  .bg-white {
+    background-color: white !important;
+  }
+  
+  /* Font sizes for print */
+  h1, h2, h3, h4 {
+    color: #000 !important;
+    page-break-after: avoid;
+  }
+  
+  /* Ensure grid layouts work in print */
+  .grid {
+    display: grid !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Ensure flex layouts work in print */
+  .flex {
+    display: flex !important;
+  }
+
+  /* Compact spacing in print */
+  .print-section .grid {
+    gap: 0.5rem !important;
+  }
+
+  /* Avoid breaking inside these elements */
+  .print-field,
+  .print-section,
+  .print-operation,
+  tr,
+  td,
+  th {
+    page-break-inside: avoid !important;
+  }
+}
