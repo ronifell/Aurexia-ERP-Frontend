@@ -183,6 +183,11 @@ export const productionOrdersAPI = {
     return response.data;
   },
   
+  getTravelSheets: async (id: number) => {
+    const response = await api.get(`/production-orders/${id}/travel-sheets`);
+    return response.data;
+  },
+  
   delete: async (id: number) => {
     const response = await api.delete(`/production-orders/${id}`);
     return response.data;
@@ -262,6 +267,39 @@ export const usersAPI = {
 export const processesAPI = {
   getAll: async () => {
     const response = await api.get('/processes/');
+    return response.data;
+  },
+};
+
+// Quality Inspections API
+export const qualityInspectionsAPI = {
+  getAll: async (params?: any) => {
+    const response = await api.get('/quality-inspections/', { params });
+    return response.data;
+  },
+  
+  getById: async (id: number) => {
+    const response = await api.get(`/quality-inspections/${id}`);
+    return response.data;
+  },
+  
+  create: async (data: any) => {
+    const response = await api.post('/quality-inspections/', data);
+    return response.data;
+  },
+  
+  update: async (id: number, data: any) => {
+    const response = await api.put(`/quality-inspections/${id}`, data);
+    return response.data;
+  },
+  
+  delete: async (id: number) => {
+    const response = await api.delete(`/quality-inspections/${id}`);
+    return response.data;
+  },
+  
+  getPendingInspections: async (productionOrderId: number) => {
+    const response = await api.get(`/quality-inspections/production-order/${productionOrderId}/pending`);
     return response.data;
   },
 };

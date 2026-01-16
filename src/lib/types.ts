@@ -161,3 +161,20 @@ export interface ProductionDashboardItem {
   risk_status: 'Green' | 'Yellow' | 'Red';
   completion_percentage: number;
 }
+
+export interface QualityInspection {
+  id: number;
+  travel_sheet_id?: number;
+  production_order_id: number;
+  production_order?: ProductionOrder;
+  inspector_id?: number;
+  inspector?: User;
+  inspection_date: string;
+  status: string; // 'Released', 'Rejected', 'On Hold'
+  quantity_inspected?: number;
+  quantity_approved?: number;
+  quantity_rejected?: number;
+  rejection_reason?: string;
+  notes?: string;
+  created_at: string;
+}

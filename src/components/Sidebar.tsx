@@ -12,7 +12,8 @@ import {
   Factory, 
   QrCode, 
   Users,
-  Building2
+  Building2,
+  ClipboardCheck
 } from 'lucide-react';
 
 const Sidebar = React.memo(() => {
@@ -28,6 +29,7 @@ const Sidebar = React.memo(() => {
       { name: 'Customers', href: '/customers', icon: Building2 },
       { name: 'Production', href: '/production', icon: Factory },
       { name: 'Part Numbers', href: '/part-numbers', icon: Package },
+      { name: 'Quality', href: '/inspections', icon: ClipboardCheck },
       { name: 'QR Scanner', href: '/qr-scanner', icon: QrCode },
     ];
 
