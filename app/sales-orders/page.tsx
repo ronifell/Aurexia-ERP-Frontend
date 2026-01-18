@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import PageModal from '@/components/PageModal';
 import { salesOrdersAPI } from '@/lib/api';
@@ -47,6 +47,12 @@ const SalesOrdersPage = () => {
 
   const loading = ordersLoading || customersLoading || partNumbersLoading || userLoading;
 
+  // Use refs to track previous values and prevent infinite loops
+  const prevOrdersRef = useRef<string>('');
+  const prevCustomersRef = useRef<string>('');
+  const prevPartNumbersRef = useRef<string>('');
+  const prevUserRef = useRef<string>('');
+
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (!token) {
@@ -56,13 +62,36 @@ const SalesOrdersPage = () => {
   }, [router]);
 
   useEffect(() => {
-    if (ordersData) setOrders(ordersData);
-    if (customersData) setCustomers(customersData);
-    if (partNumbersData) setPartNumbers(partNumbersData);
+    // Only update if data has actually changed (using JSON.stringify for deep comparison)
+    if (ordersData) {
+      const ordersKey = JSON.stringify(ordersData);
+      if (ordersKey !== prevOrdersRef.current) {
+        prevOrdersRef.current = ordersKey;
+        setOrders(ordersData);
+      }
+    }
+    if (customersData) {
+      const customersKey = JSON.stringify(customersData);
+      if (customersKey !== prevCustomersRef.current) {
+        prevCustomersRef.current = customersKey;
+        setCustomers(customersData);
+      }
+    }
+    if (partNumbersData) {
+      const partNumbersKey = JSON.stringify(partNumbersData);
+      if (partNumbersKey !== prevPartNumbersRef.current) {
+        prevPartNumbersRef.current = partNumbersKey;
+        setPartNumbers(partNumbersData);
+      }
+    }
     if (userData) {
-      setCurrentUser(userData);
-      const hasPermission = userData?.role?.can_view_prices || false;
-      setCanViewPrices(hasPermission);
+      const userKey = JSON.stringify(userData);
+      if (userKey !== prevUserRef.current) {
+        prevUserRef.current = userKey;
+        setCurrentUser(userData);
+        const hasPermission = userData?.role?.can_view_prices || false;
+        setCanViewPrices(hasPermission);
+      }
     }
   }, [ordersData, customersData, partNumbersData, userData]);
 

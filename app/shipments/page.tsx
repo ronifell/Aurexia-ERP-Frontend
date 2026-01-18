@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import PageModal from '@/components/PageModal';
 import { shipmentsAPI } from '@/lib/api';
@@ -54,6 +54,14 @@ const ShipmentsPage = () => {
 
   const loading = shipmentsLoading || customersLoading || partNumbersLoading || salesOrdersLoading || productionOrdersLoading || userLoading;
 
+  // Use refs to track previous values and prevent infinite loops
+  const prevShipmentsRef = useRef<string>('');
+  const prevCustomersRef = useRef<string>('');
+  const prevPartNumbersRef = useRef<string>('');
+  const prevSalesOrdersRef = useRef<string>('');
+  const prevProductionOrdersRef = useRef<string>('');
+  const prevUserRef = useRef<string>('');
+
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (!token) {
@@ -63,15 +71,50 @@ const ShipmentsPage = () => {
   }, [router]);
 
   useEffect(() => {
-    if (shipmentsData) setShipments(shipmentsData);
-    if (customersData) setCustomers(customersData);
-    if (partNumbersData) setPartNumbers(partNumbersData);
-    if (salesOrdersData) setSalesOrders(salesOrdersData);
-    if (productionOrdersData) setProductionOrders(productionOrdersData);
+    // Only update if data has actually changed (using JSON.stringify for deep comparison)
+    if (shipmentsData) {
+      const shipmentsKey = JSON.stringify(shipmentsData);
+      if (shipmentsKey !== prevShipmentsRef.current) {
+        prevShipmentsRef.current = shipmentsKey;
+        setShipments(shipmentsData);
+      }
+    }
+    if (customersData) {
+      const customersKey = JSON.stringify(customersData);
+      if (customersKey !== prevCustomersRef.current) {
+        prevCustomersRef.current = customersKey;
+        setCustomers(customersData);
+      }
+    }
+    if (partNumbersData) {
+      const partNumbersKey = JSON.stringify(partNumbersData);
+      if (partNumbersKey !== prevPartNumbersRef.current) {
+        prevPartNumbersRef.current = partNumbersKey;
+        setPartNumbers(partNumbersData);
+      }
+    }
+    if (salesOrdersData) {
+      const salesOrdersKey = JSON.stringify(salesOrdersData);
+      if (salesOrdersKey !== prevSalesOrdersRef.current) {
+        prevSalesOrdersRef.current = salesOrdersKey;
+        setSalesOrders(salesOrdersData);
+      }
+    }
+    if (productionOrdersData) {
+      const productionOrdersKey = JSON.stringify(productionOrdersData);
+      if (productionOrdersKey !== prevProductionOrdersRef.current) {
+        prevProductionOrdersRef.current = productionOrdersKey;
+        setProductionOrders(productionOrdersData);
+      }
+    }
     if (userData) {
-      setCurrentUser(userData);
-      const hasPermission = userData?.role?.can_view_prices || false;
-      setCanViewPrices(hasPermission);
+      const userKey = JSON.stringify(userData);
+      if (userKey !== prevUserRef.current) {
+        prevUserRef.current = userKey;
+        setCurrentUser(userData);
+        const hasPermission = userData?.role?.can_view_prices || false;
+        setCanViewPrices(hasPermission);
+      }
     }
   }, [shipmentsData, customersData, partNumbersData, salesOrdersData, productionOrdersData, userData]);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import PageModal from '@/components/PageModal';
 import { ProductionOrder, PartNumber, SalesOrder, TravelSheet } from '@/lib/types';
@@ -45,6 +45,11 @@ const ProductionPage = () => {
 
   const loading = ordersLoading || partNumbersLoading || salesOrdersLoading;
 
+  // Use refs to track previous values and prevent infinite loops
+  const prevOrdersRef = useRef<string>('');
+  const prevPartNumbersRef = useRef<string>('');
+  const prevSalesOrdersRef = useRef<string>('');
+
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (!token) {
@@ -54,9 +59,28 @@ const ProductionPage = () => {
   }, [router]);
 
   useEffect(() => {
-    if (ordersData) setOrders(ordersData);
-    if (partNumbersData) setPartNumbers(partNumbersData);
-    if (salesOrdersData) setSalesOrders(salesOrdersData);
+    // Only update if data has actually changed (using JSON.stringify for deep comparison)
+    if (ordersData) {
+      const ordersKey = JSON.stringify(ordersData);
+      if (ordersKey !== prevOrdersRef.current) {
+        prevOrdersRef.current = ordersKey;
+        setOrders(ordersData);
+      }
+    }
+    if (partNumbersData) {
+      const partNumbersKey = JSON.stringify(partNumbersData);
+      if (partNumbersKey !== prevPartNumbersRef.current) {
+        prevPartNumbersRef.current = partNumbersKey;
+        setPartNumbers(partNumbersData);
+      }
+    }
+    if (salesOrdersData) {
+      const salesOrdersKey = JSON.stringify(salesOrdersData);
+      if (salesOrdersKey !== prevSalesOrdersRef.current) {
+        prevSalesOrdersRef.current = salesOrdersKey;
+        setSalesOrders(salesOrdersData);
+      }
+    }
   }, [ordersData, partNumbersData, salesOrdersData]);
 
   const loadOrders = () => {

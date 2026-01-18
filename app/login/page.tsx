@@ -91,12 +91,12 @@ const LoginPage = () => {
                 <div className="max-w-md w-full my-auto">
                     {/* Logo and Title */}
                     <div className="text-center mb-6">
-                        <div className="flex justify-center -mb-25">
+                        <div className="flex justify-center mb-5">
                             <Image
                                 src="/logo.png"
                                 alt="Aurexia"
-                                width={400}
-                                height={340}
+                                width={130}
+                                height={200}
                                 className="brightness-110 object-contain"
                                 priority
                             />
