@@ -58,7 +58,7 @@ const Navbar = React.memo(() => {
           }}
         >
           <Image 
-            src="/logo.PNG" 
+            src="/logo.png" 
             alt="Aurexia" 
             width={60} 
             height={60}
@@ -82,7 +82,7 @@ const Navbar = React.memo(() => {
               }}
             >
               <Image 
-                src="/logo.PNG" 
+                src="/logo.png" 
                 alt="Aurexia" 
                 width={60} 
                 height={60}
