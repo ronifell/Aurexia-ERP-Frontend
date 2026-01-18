@@ -93,7 +93,7 @@ const LoginPage = () => {
                     <div className="text-center mb-6">
                         <div className="flex justify-center mb-5">
                             <Image
-                                src="/logo.png"
+                                src="/logo.PNG"
                                 alt="Aurexia"
                                 width={130}
                                 height={200}
