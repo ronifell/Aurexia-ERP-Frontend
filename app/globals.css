@@ -151,6 +151,318 @@ table tbody tr:hover {
   background-color: rgba(212, 175, 55, 0.05) !important;
 }
 
+/* Chart container wrapper */
+.chart-container {
+  background-color: transparent !important;
+}
+
+.chart-container * {
+  background-color: transparent !important;
+}
+
+/* Change white/light grey category background on hover to dark theme color */
+/* Target both rect AND path elements - the background is a path! */
+.chart-container svg rect[fill="#fff"],
+.chart-container svg rect[fill="white"],
+.chart-container svg rect[fill="#ffffff"],
+.chart-container svg rect[fill="#f5f5f5"],
+.chart-container svg rect[fill="#fafafa"],
+.chart-container svg rect[fill="#f0f0f0"],
+.chart-container svg rect[fill="#e5e5e5"],
+.chart-container svg rect[fill="#e0e0e0"],
+.chart-container svg rect[fill="#d3d3d3"],
+.chart-container svg rect[fill="#c0c0c0"],
+.chart-container svg rect[fill="#bebebe"],
+.chart-container svg path[fill="#fff"],
+.chart-container svg path[fill="white"],
+.chart-container svg path[fill="#ffffff"],
+.chart-container svg path[fill="#f5f5f5"],
+.chart-container svg path[fill="#fafafa"],
+.chart-container svg path[fill="#f0f0f0"],
+.chart-container svg path[fill="#e5e5e5"],
+.chart-container svg path[fill="#e0e0e0"],
+.chart-container svg path[fill="#d3d3d3"],
+.chart-container svg path[fill="#c0c0c0"],
+.chart-container svg path[fill="#bebebe"],
+.chart-container svg g rect[fill="#fff"],
+.chart-container svg g rect[fill="white"],
+.chart-container svg g rect[fill="#ffffff"],
+.chart-container svg g rect[fill="#f5f5f5"],
+.chart-container svg g rect[fill="#fafafa"],
+.chart-container svg g rect[fill="#f0f0f0"],
+.chart-container svg g rect[fill="#e5e5e5"],
+.chart-container svg g rect[fill="#e0e0e0"],
+.chart-container svg g rect[fill="#d3d3d3"],
+.chart-container svg g rect[fill="#c0c0c0"],
+.chart-container svg g rect[fill="#bebebe"],
+.chart-container svg g path[fill="#fff"],
+.chart-container svg g path[fill="white"],
+.chart-container svg g path[fill="#ffffff"],
+.chart-container svg g path[fill="#f5f5f5"],
+.chart-container svg g path[fill="#fafafa"],
+.chart-container svg g path[fill="#f0f0f0"],
+.chart-container svg g path[fill="#e5e5e5"],
+.chart-container svg g path[fill="#e0e0e0"],
+.chart-container svg g path[fill="#d3d3d3"],
+.chart-container svg g path[fill="#c0c0c0"],
+.chart-container svg g path[fill="#bebebe"] {
+  fill: rgba(0, 0, 0, 0.2) !important;
+  opacity: 1 !important;
+}
+
+/* But preserve actual bar colors by resetting filter */
+.chart-container svg rect[fill*="url("],
+.chart-container svg rect[fill*="gradient"],
+.chart-container svg rect[fill="#22c55e"],
+.chart-container svg rect[fill="#3b82f6"],
+.chart-container svg rect[fill="#eab308"],
+.chart-container svg rect[fill="#86efac"],
+.chart-container svg rect[fill="#93c5fd"],
+.chart-container svg rect[fill="#fde047"],
+.chart-container svg rect[fill="#4ade80"],
+.chart-container svg rect[fill="#fca5a5"],
+.chart-container svg rect[fill="#ef4444"],
+.chart-container svg rect[fill="#333"],
+.chart-container svg rect[fill="#000"],
+.chart-container svg rect[fill="transparent"],
+.chart-container svg rect[fill="none"],
+.chart-container svg rect[fill="rgba(0, 0, 0"],
+.chart-container svg rect[fill="rgba(34, 197, 94"],
+.chart-container svg rect[fill="rgba(59, 130, 246"],
+.chart-container svg rect[fill="rgba(234, 179, 8"],
+.chart-container svg rect[fill="rgba(134, 239, 172"],
+.chart-container svg rect[fill="rgba(147, 197, 253"],
+.chart-container svg rect[fill="rgba(253, 224, 71"],
+.chart-container svg rect[fill="rgba(74, 222, 128"],
+.chart-container svg rect[fill="rgba(252, 165, 165"],
+.chart-container svg rect[fill="rgba(239, 68, 68"] {
+  filter: none !important;
+}
+
+/* Target light-colored rectangles with maximum specificity */
+.chart-container svg rect[fill="#fff"]:not([fill*="url("]),
+.chart-container svg rect[fill="white"]:not([fill*="url("]),
+.chart-container svg rect[fill="#ffffff"]:not([fill*="url("]),
+.chart-container svg rect[fill="#f5f5f5"]:not([fill*="url("]),
+.chart-container svg rect[fill="#fafafa"]:not([fill*="url("]),
+.chart-container svg rect[fill="#f0f0f0"]:not([fill*="url("]),
+.chart-container svg rect[fill="#e5e5e5"]:not([fill*="url("]),
+.chart-container svg rect[fill="#e0e0e0"]:not([fill*="url("]),
+.chart-container svg rect[fill="#d3d3d3"]:not([fill*="url("]),
+.chart-container svg rect[fill="#c0c0c0"]:not([fill*="url("]),
+.chart-container svg rect[fill="#bebebe"]:not([fill*="url("]),
+.chart-container svg g rect[fill="#fff"]:not([fill*="url("]),
+.chart-container svg g rect[fill="white"]:not([fill*="url("]),
+.chart-container svg g rect[fill="#ffffff"]:not([fill*="url("]),
+.chart-container svg g rect[fill="#f5f5f5"]:not([fill*="url("]),
+.chart-container svg g rect[fill="#fafafa"]:not([fill*="url("]),
+.chart-container svg g rect[fill="#f0f0f0"]:not([fill*="url("]),
+.chart-container svg g rect[fill="#e5e5e5"]:not([fill*="url("]),
+.chart-container svg g rect[fill="#e0e0e0"]:not([fill*="url("]),
+.chart-container svg g rect[fill="#d3d3d3"]:not([fill*="url("]),
+.chart-container svg g rect[fill="#c0c0c0"]:not([fill*="url("]),
+.chart-container svg g rect[fill="#bebebe"]:not([fill*="url("]) {
+  fill: rgba(0, 0, 0, 0.2) !important;
+  background: rgba(0, 0, 0, 0.2) !important;
+  opacity: 1 !important;
+}
+
+/* Also target by style attribute with inline styles */
+.chart-container svg rect[style*="fill: white"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill:#fff"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill:#ffffff"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill:white"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill: rgb(255"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill:rgb(255"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill: rgb(245"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill:rgb(245"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill: rgb(240"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill:rgb(240"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill: rgb(250"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill:rgb(250"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill: rgb(230"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill:rgb(230"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill: rgb(220"]:not([fill*="url("]),
+.chart-container svg rect[style*="fill:rgb(220"]:not([fill*="url("]) {
+  fill: rgba(0, 0, 0, 0.2) !important;
+  background: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Now specifically target light colors and force dark */
+.chart-container svg rect[fill="#fff"],
+.chart-container svg rect[fill="white"],
+.chart-container svg rect[fill="#ffffff"],
+.chart-container svg rect[fill="#f5f5f5"],
+.chart-container svg rect[fill="#fafafa"],
+.chart-container svg rect[fill="#f0f0f0"],
+.chart-container svg rect[fill="#e5e5e5"],
+.chart-container svg rect[fill="#e0e0e0"],
+.chart-container svg rect[fill="#d3d3d3"],
+.chart-container svg rect[fill="#c0c0c0"],
+.chart-container svg rect[fill="#bebebe"],
+.chart-container svg rect[style*="fill: white"],
+.chart-container svg rect[style*="fill:#fff"],
+.chart-container svg rect[style*="fill:#ffffff"],
+.chart-container svg rect[style*="fill:white"],
+.chart-container svg rect[style*="fill: rgb(255"],
+.chart-container svg rect[style*="fill:rgb(255"],
+.chart-container svg rect[style*="fill: rgb(245"],
+.chart-container svg rect[style*="fill:rgb(245"],
+.chart-container svg rect[style*="fill: rgb(240"],
+.chart-container svg rect[style*="fill:rgb(240"],
+.chart-container svg rect[style*="fill: rgb(250"],
+.chart-container svg rect[style*="fill:rgb(250"],
+.chart-container svg rect[style*="fill: rgb(230"],
+.chart-container svg rect[style*="fill:rgb(230"],
+.chart-container svg rect[style*="fill: rgb(220"],
+.chart-container svg rect[style*="fill:rgb(220"] {
+  fill: rgba(0, 0, 0, 0.2) !important;
+  background: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Target background rectangles in groups (category highlights) */
+.chart-container svg g rect[fill="#fff"],
+.chart-container svg g rect[fill="white"],
+.chart-container svg g rect[fill="#ffffff"],
+.chart-container svg g rect[fill="#f5f5f5"],
+.chart-container svg g rect[fill="#fafafa"],
+.chart-container svg g rect[fill="#f0f0f0"],
+.chart-container svg g rect[fill="#e5e5e5"],
+.chart-container svg g rect[fill="#e0e0e0"],
+.chart-container svg g rect[fill="#d3d3d3"],
+.chart-container svg g rect[fill="#c0c0c0"],
+.chart-container svg g rect[fill="#bebebe"] {
+  fill: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Override Recharts default hover backgrounds */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-bar-rectangle,
+.recharts-active-bar,
+.recharts-bar,
+.recharts-bar-background,
+.recharts-cartesian-grid,
+.recharts-cartesian-grid-horizontal,
+.recharts-cartesian-grid-vertical {
+  background-color: transparent !important;
+}
+
+.recharts-bar-rectangle:hover,
+.recharts-bar-rectangle:active,
+.recharts-active-bar {
+  background-color: transparent !important;
+  fill-opacity: 1 !important;
+}
+
+/* Override any white backgrounds in Recharts tooltip containers */
+.recharts-tooltip-wrapper {
+  background-color: transparent !important;
+}
+
+.recharts-default-tooltip {
+  background-color: rgba(0, 0, 0, 0.85) !important;
+  border: 1px solid #D4AF37 !important;
+  border-radius: 0.5rem !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Override any background rectangles that Recharts might add on hover */
+.recharts-bar-background-rectangle,
+.recharts-active-bar-background,
+.recharts-bar-background {
+  fill: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Target any rectangle elements within Recharts that might show white on hover */
+.recharts-wrapper rect,
+.recharts-surface rect {
+  fill: transparent !important;
+}
+
+.recharts-wrapper rect[fill="#fff"],
+.recharts-wrapper rect[fill="white"],
+.recharts-surface rect[fill="#fff"],
+.recharts-surface rect[fill="white"],
+.recharts-wrapper rect[fill="#ffffff"],
+.recharts-surface rect[fill="#ffffff"] {
+  fill: transparent !important;
+  display: none !important;
+  opacity: 0 !important;
+}
+
+/* Target rectangles that appear on hover - these are often added dynamically */
+.recharts-wrapper rect:not([fill*="gradient"]):not([fill*="url"]):not([fill*="#"]),
+.recharts-surface rect:not([fill*="gradient"]):not([fill*="url"]):not([fill*="#"]),
+.recharts-bar-background-rectangle,
+.recharts-active-bar-background-rectangle {
+  fill: transparent !important;
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Specifically target any rectangle with white or default fill */
+.recharts-wrapper rect[fill=""],
+.recharts-surface rect[fill=""] {
+  fill: transparent !important;
+  display: none !important;
+}
+
+/* Ensure chart container has transparent background */
+.recharts-responsive-container {
+  background-color: transparent !important;
+}
+
+/* Override any hover state backgrounds */
+.recharts-bar:hover ~ .recharts-bar-background,
+.recharts-active-bar ~ .recharts-bar-background {
+  fill: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Aggressive override for any white backgrounds in Recharts */
+.recharts-wrapper *,
+.recharts-surface * {
+  background-color: transparent !important;
+}
+
+.recharts-wrapper *[style*="background"],
+.recharts-surface *[style*="background"] {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Specifically target any elements with white fill or background */
+.recharts-wrapper *[fill="#fff"],
+.recharts-wrapper *[fill="white"],
+.recharts-wrapper *[fill="#ffffff"],
+.recharts-surface *[fill="#fff"],
+.recharts-surface *[fill="white"],
+.recharts-surface *[fill="#ffffff"],
+.chart-container *[fill="#fff"],
+.chart-container *[fill="white"],
+.chart-container *[fill="#ffffff"] {
+  fill: transparent !important;
+  background-color: transparent !important;
+  opacity: 0 !important;
+  display: none !important;
+}
+
+/* Target any element that might have a white background style */
+.chart-container *[style*="background-color: white"],
+.chart-container *[style*="background-color:#fff"],
+.chart-container *[style*="background-color:#ffffff"],
+.chart-container *[style*="background: white"],
+.chart-container *[style*="background:#fff"],
+.chart-container *[style*="background:#ffffff"] {
+  background-color: transparent !important;
+  background: transparent !important;
+  opacity: 0 !important;
+}
+
 /* Page Modal Container - Large glass-morphism wrapper for all content */
 .page-modal-container {
   background-color: transparent;
@@ -238,17 +550,37 @@ table tbody tr:hover {
     display: none !important;
   }
   
-  /* Hide all elements by default */
-  body > * {
+  /* When body has 'printing' class, use visibility to hide everything except print-modal */
+  /* Using visibility instead of display so parent containers don't block children */
+  body.printing * {
+    visibility: hidden !important;
+  }
+  
+  /* Show ONLY print-modal and ALL its descendants when printing */
+  body.printing .print-modal,
+  body.printing .print-modal *,
+  body.printing .print-modal *::before,
+  body.printing .print-modal *::after {
+    visibility: visible !important;
+  }
+  
+  /* Hide display for specific page elements (but keep parent containers) */
+  body.printing .page-modal-container > nav,
+  body.printing .page-modal-container > header,
+  body.printing .page-modal-container > div:not(:has(.print-modal)),
+  body.printing table:not(.print-modal *),
+  body.printing button:not(.print-modal *) {
     display: none !important;
   }
   
-  /* Show only the print modal */
-  .print-modal {
+  /* Force print-modal to display as block */
+  body.printing .print-modal {
     display: block !important;
+    visibility: visible !important;
     position: static !important;
     background: white !important;
     padding: 0 !important;
+    margin: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
@@ -256,6 +588,18 @@ table tbody tr:hover {
     overflow: visible !important;
     z-index: auto !important;
     inset: auto !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+  }
+  
+  /* Ensure body and html are visible when printing */
+  body.printing {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   
   /* Style the print content */
@@ -270,8 +614,9 @@ table tbody tr:hover {
     min-height: auto !important;
     height: auto !important;
     overflow: visible !important;
-    padding: 0 !important;
+    padding: 0.5cm 0 !important;
     margin: 0 !important;
+    display: block !important;
   }
   
   /* Hide buttons and non-essential elements */
@@ -281,8 +626,13 @@ table tbody tr:hover {
     display: none !important;
   }
 
-  /* Ensure all main content is visible */
-  .print-modal * {
+  /* Ensure content sections are displayed */
+  .print-header,
+  .print-section,
+  .print-travel-sheet,
+  .print-sheet-header,
+  .print-footer {
+    display: block !important;
     visibility: visible !important;
   }
 
@@ -430,6 +780,16 @@ table tbody tr:hover {
     width: 180px !important;
     height: 180px !important;
     display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Ensure QR code container is visible and properly sized */
+  .print-qr-main {
+    min-width: 180px !important;
+    min-height: 180px !important;
+    visibility: visible !important;
+    display: inline-block !important;
   }
 
   .print-qr-label {
@@ -466,8 +826,8 @@ table tbody tr:hover {
     display: none !important;
   }
 
-  /* Hide entire operations container */
-  .print-travel-sheet > div:last-child {
+  /* Hide operations container but keep footer */
+  .print-travel-sheet > .no-print-operations {
     display: none !important;
   }
 
@@ -593,6 +953,18 @@ table tbody tr:hover {
   /* Ensure flex layouts work in print */
   .flex {
     display: flex !important;
+  }
+  
+  /* Ensure space-y-6 container shows all travel sheets */
+  .space-y-6 {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  .space-y-6 > * {
+    display: block !important;
+    visibility: visible !important;
+    margin-bottom: 1.5rem !important;
   }
 
   /* Compact spacing in print */

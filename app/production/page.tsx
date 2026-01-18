@@ -194,27 +194,99 @@ const ProductionPage = () => {
   };
 
   const handlePrintTravelSheet = () => {
-    // Add print-specific styles before printing
-    const style = document.createElement('style');
-    style.id = 'print-styles-temp';
-    style.innerHTML = `
-      @media print {
-        @page { size: A4; margin: 1.5cm; }
-        body * { visibility: hidden; }
-        .print-modal, .print-modal * { visibility: visible; }
-        .print-modal { position: absolute; left: 0; top: 0; width: 100%; }
-        .no-print { display: none !important; }
+    // Find the print-content element (inner content of modal)
+    const printContent = document.querySelector('.print-content');
+    if (!printContent) {
+      console.error('Print content not found');
+      return;
+    }
+
+    // Clone the content (deep clone to preserve all elements including SVGs)
+    const clone = printContent.cloneNode(true) as HTMLElement;
+    
+    // Remove no-print elements from clone
+    const noPrintElements = clone.querySelectorAll('.no-print, .no-print-operations, button');
+    noPrintElements.forEach(el => el.remove());
+    
+    // Create comprehensive print styles - optimized for single page with balanced layout
+    const printStyles = `
+      @page {
+        size: A4 portrait;
+        margin: 0.3cm 0.5cm;
       }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        box-sizing: border-box;
+      }
+      html, body {
+        width: 210mm;
+        height: 297mm;
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-family: Arial, sans-serif;
+        color: black;
+      }
+      .print-content { padding-top: 0.8rem !important; }
+      .print-header { display: block !important; margin-bottom: 0.35rem !important; }
+      .print-header-border { border-bottom: 2px solid #000 !important; padding-bottom: 0.25rem !important; margin-bottom: 0.35rem !important; }
+      .print-logo-container { display: flex !important; justify-content: center !important; align-items: center !important; margin-bottom: 0.15rem !important; }
+      .print-logo-image { max-height: 45px !important; max-width: 180px !important; width: auto !important; height: auto !important; object-fit: contain !important; }
+      .print-logo { font-size: 1.4rem !important; font-weight: bold !important; letter-spacing: 0.2em !important; color: #000 !important; text-align: center !important; margin-bottom: 0.1rem !important; line-height: 1.2 !important; }
+      .print-subtitle { font-size: 0.85rem !important; font-weight: 600 !important; text-transform: uppercase !important; color: #000 !important; text-align: center !important; margin-bottom: 0.1rem !important; line-height: 1.2 !important; }
+      .print-doc-type { font-size: 0.65rem !important; color: #444 !important; text-align: center !important; line-height: 1.2 !important; }
+      .print-section { display: block !important; background: white !important; border: 2px solid #000 !important; padding: 0.6rem !important; margin-bottom: 0.4rem !important; min-height: 3.5cm !important; }
+      .print-section-title { font-size: 0.95rem !important; font-weight: bold !important; color: #000 !important; border-bottom: 2px solid #000 !important; padding-bottom: 0.2rem !important; margin-bottom: 0.4rem !important; text-transform: uppercase !important; line-height: 1.3 !important; }
+      .print-section .grid { grid-template-columns: repeat(4, 1fr) !important; gap: 0.35rem 0.5rem !important; }
+      .print-travel-sheet { display: block !important; border: 2px solid #000 !important; background: white !important; padding: 0.6rem !important; margin-bottom: 0.3rem !important; min-height: 3.5cm !important; page-break-inside: avoid !important; }
+      .print-sheet-header { display: flex !important; justify-content: space-between !important; align-items: flex-start !important; margin-bottom: 0.5rem !important; }
+      .print-sheet-number { font-size: 1.1rem !important; font-weight: bold !important; color: #000 !important; border-bottom: 2px solid #000 !important; padding-bottom: 0.3rem !important; margin-bottom: 0.35rem !important; line-height: 1.3 !important; }
+      .print-sheet-header .grid { grid-template-columns: repeat(2, 1fr) !important; gap: 0.3rem 0.5rem !important; }
+      .print-qr-main { background: white !important; border: 2px solid #000 !important; padding: 0.4rem !important; display: inline-block !important; min-width: 110px; min-height: 110px; }
+      .print-qr-main svg { width: 110px !important; height: 110px !important; display: block !important; }
+      .print-qr-label { font-size: 0.7rem !important; font-weight: bold !important; color: #000 !important; text-align: center !important; margin-top: 0.25rem !important; line-height: 1.2 !important; }
+      .print-footer { display: block !important; margin-top: 0.4rem !important; padding-top: 0.35rem !important; border-top: 2px solid #000 !important; }
+      .print-footer-company { font-weight: bold !important; color: #000 !important; font-size: 0.7rem !important; line-height: 1.3 !important; }
+      .print-footer-timestamp { font-size: 0.6rem !important; color: #444 !important; line-height: 1.3 !important; }
+      .print-field { margin-bottom: 0.3rem !important; }
+      .print-field-label { font-size: 0.65rem !important; font-weight: 600 !important; color: #333 !important; text-transform: uppercase !important; margin-bottom: 0.08rem !important; display: block !important; line-height: 1.2 !important; }
+      .print-field-value { font-size: 0.85rem !important; font-weight: bold !important; color: #000 !important; display: block !important; line-height: 1.3 !important; }
+      .no-print-operations { display: none !important; }
+      button { display: none !important; }
+      .card-aurexia { background: white !important; border: none !important; padding: 0 !important; }
+      .grid { display: grid !important; }
+      .flex { display: flex !important; }
+      .space-y-6 > * + * { margin-top: 0.25rem !important; }
     `;
-    document.head.appendChild(style);
-    
-    window.print();
-    
-    // Remove temporary styles after printing
-    setTimeout(() => {
-      const tempStyle = document.getElementById('print-styles-temp');
-      if (tempStyle) tempStyle.remove();
-    }, 1000);
+
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow pop-ups to print the travel sheet');
+      return;
+    }
+
+    // Write the HTML with print styles
+    printWindow.document.open();
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Travel Sheet - ${selectedOrder?.po_number || 'Production Order'}</title>
+          <style>${printStyles}</style>
+        </head>
+        <body>${clone.outerHTML}</body>
+      </html>
+    `);
+    printWindow.document.close();
+
+    // Wait for content to load, then print
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+    };
   };
 
   const filteredOrders = orders.filter(order =>
@@ -625,6 +697,9 @@ const ProductionPage = () => {
               {/* Print-only Professional Header */}
               <div className="print-header">
                 <div className="print-header-border">
+                  <div className="print-logo-container">
+                    <img src="/logo.PNG" alt="AUREXIA Logo" className="print-logo-image" />
+                  </div>
                   <div className="print-logo">AUREXIA</div>
                   <div className="print-subtitle">Manufacturing Excellence</div>
                   <div className="print-doc-type">Production Travel Sheet</div>
