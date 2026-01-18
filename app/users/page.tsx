@@ -8,6 +8,8 @@ import { User, Role } from '@/lib/types';
 import { Plus, Search, Edit, Trash2, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
 const UsersPage = () => {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
@@ -61,7 +63,7 @@ const UsersPage = () => {
         role_id: formData.role_id ? parseInt(formData.role_id) : undefined,
       };
       
-      const response = await fetch('http://localhost:8000/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

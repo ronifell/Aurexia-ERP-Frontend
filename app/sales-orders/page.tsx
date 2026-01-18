@@ -9,6 +9,8 @@ import { SalesOrder, Customer, PartNumber, User } from '@/lib/types';
 import { Plus, Search, Eye, Edit, Trash2, X, ShoppingCart, Calendar, Package, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
 interface OrderItem {
   part_number_id: number;
   quantity: number;
@@ -283,7 +285,7 @@ const SalesOrdersPage = () => {
 
       toast.loading('Generating Excel file...');
       
-      const response = await fetch('http://localhost:8000/api/exports/sales-orders', {
+      const response = await fetch(`${API_BASE_URL}/exports/sales-orders`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

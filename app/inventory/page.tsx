@@ -6,6 +6,8 @@ import PageModal from '@/components/PageModal';
 import { Plus, Search, Edit, Trash2, X, Package, Truck as TruckIcon, Box, ArrowDownUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
 interface Material {
   id: number;
   name: string;
@@ -115,19 +117,19 @@ const InventoryPage = () => {
       const headers = { 'Authorization': `Bearer ${token}` };
 
       if (activeTab === 'materials') {
-        const res = await fetch('http://localhost:8000/api/materials/list', { headers });
+        const res = await fetch(`${API_BASE_URL}/materials/list`, { headers });
         const data = await res.json();
         setMaterials(data);
       } else if (activeTab === 'suppliers') {
-        const res = await fetch('http://localhost:8000/api/materials/suppliers/list', { headers });
+        const res = await fetch(`${API_BASE_URL}/materials/suppliers/list`, { headers });
         const data = await res.json();
         setSuppliers(data);
       } else if (activeTab === 'batches') {
-        const res = await fetch('http://localhost:8000/api/materials/batches/list', { headers });
+        const res = await fetch(`${API_BASE_URL}/materials/batches/list`, { headers });
         const data = await res.json();
         setBatches(data);
       } else if (activeTab === 'movements') {
-        const res = await fetch('http://localhost:8000/api/materials/movements/list', { headers });
+        const res = await fetch(`${API_BASE_URL}/materials/movements/list`, { headers });
         const data = await res.json();
         setMovements(data);
       }
@@ -145,8 +147,8 @@ const InventoryPage = () => {
     try {
       const token = localStorage.getItem('auth_token');
       const url = editingMaterial
-        ? `http://localhost:8000/api/materials/${editingMaterial.id}`
-        : 'http://localhost:8000/api/materials/';
+        ? `${API_BASE_URL}/materials/${editingMaterial.id}`
+        : `${API_BASE_URL}/materials/`;
       
       const res = await fetch(url, {
         method: editingMaterial ? 'PUT' : 'POST',
@@ -177,7 +179,7 @@ const InventoryPage = () => {
     
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch(`http://localhost:8000/api/materials/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/materials/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -197,8 +199,8 @@ const InventoryPage = () => {
     try {
       const token = localStorage.getItem('auth_token');
       const url = editingSupplier
-        ? `http://localhost:8000/api/materials/suppliers/${editingSupplier.id}`
-        : 'http://localhost:8000/api/materials/suppliers/';
+        ? `${API_BASE_URL}/materials/suppliers/${editingSupplier.id}`
+        : `${API_BASE_URL}/materials/suppliers/`;
       
       const res = await fetch(url, {
         method: editingSupplier ? 'PUT' : 'POST',
@@ -226,7 +228,7 @@ const InventoryPage = () => {
     
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch(`http://localhost:8000/api/materials/suppliers/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/materials/suppliers/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -245,7 +247,7 @@ const InventoryPage = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch('http://localhost:8000/api/materials/batches/', {
+      const res = await fetch(`${API_BASE_URL}/materials/batches/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

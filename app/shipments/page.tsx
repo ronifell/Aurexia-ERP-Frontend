@@ -9,6 +9,8 @@ import { Shipment, Customer, PartNumber, SalesOrder, ProductionOrder, User } fro
 import { Plus, Search, Eye, Edit, Trash2, X, Package, Truck, CheckCircle, Calendar, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
 interface ShipmentItemForm {
   part_number_id: number;
   quantity: number;
@@ -292,7 +294,7 @@ const ShipmentsPage = () => {
 
       toast.loading('Generating Excel file...');
       
-      const response = await fetch('http://localhost:8000/api/exports/shipments', {
+      const response = await fetch(`${API_BASE_URL}/exports/shipments`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
