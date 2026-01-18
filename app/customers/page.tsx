@@ -107,14 +107,14 @@ const CustomersPage = () => {
     resetForm();
   };
 
-  const filteredCustomers = customers.filter(customer =>
+  const filteredCustomers = customers.filter((customer: Customer) =>
     customer.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.contact_person?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const activeCustomers = customers.filter(c => c.is_active).length;
+  const activeCustomers = customers.filter((c: Customer) => c.is_active).length;
   const inactiveCustomers = customers.length - activeCustomers;
 
   if (loading) {
@@ -212,7 +212,7 @@ const CustomersPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCustomers.map((customer) => (
+                  {filteredCustomers.map((customer: Customer) => (
                     <tr key={customer.id} className="border-b border-gray-800 hover:bg-yellow-500/5">
                       <td className="py-3 px-4">
                         <code className="text-sm bg-gray-800 text-yellow-400 px-2 py-1 rounded font-mono">

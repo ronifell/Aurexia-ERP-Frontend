@@ -133,7 +133,7 @@ const PartNumbersPage = () => {
     setRoutings(updated);
   };
 
-  const filteredPartNumbers = partNumbers.filter(pn =>
+  const filteredPartNumbers = partNumbers.filter((pn: PartNumber) =>
     pn.part_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
     pn.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     pn.customer?.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -207,7 +207,7 @@ const PartNumbersPage = () => {
                       </td>
                     </tr>
                   ) : (
-                    filteredPartNumbers.map((pn) => (
+                    filteredPartNumbers.map((pn: PartNumber) => (
                       <tr key={pn.id} className="border-b border-gray-800 hover:bg-yellow-500/5">
                         <td className="py-2 px-3 text-gray-200 font-medium text-xs">{pn.part_number}</td>
                         <td className="py-2 px-3 text-gray-300 text-xs">{pn.description || '-'}</td>
@@ -280,7 +280,7 @@ const PartNumbersPage = () => {
                         className="w-full px-4 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
                       >
                         <option value="">Select customer...</option>
-                        {customers.map((customer) => (
+                        {customers.map((customer: Customer) => (
                           <option key={customer.id} value={customer.id}>
                             {customer.code} - {customer.name}
                           </option>
@@ -371,7 +371,7 @@ const PartNumbersPage = () => {
                                 onChange={(e) => updateRouting(index, 'process_id', parseInt(e.target.value))}
                                 className="w-full px-3 py-1.5 bg-black/50 border border-yellow-500/30 rounded text-gray-100 text-sm"
                               >
-                                {processes.map((process) => (
+                                {processes.map((process: Process) => (
                                   <option key={process.id} value={process.id}>
                                     {process.name} ({process.code})
                                   </option>
