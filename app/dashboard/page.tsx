@@ -17,7 +17,8 @@ import {
   Clock, 
   Factory, 
   TrendingUp,
-  Package
+  Package,
+  Truck
 } from 'lucide-react';
 
 // Lazy load chart components for better performance
@@ -113,8 +114,8 @@ const DashboardPage = () => {
 
   return (
     <PageModal>
-      <div className="h-full overflow-hidden flex flex-col px-6">
-          <div className="w-full py-4 h-full flex flex-col max-w-[2000px] mx-auto">
+      <div className="min-h-full flex flex-col px-6 py-4">
+          <div className="w-full py-4 flex flex-col max-w-[2000px] mx-auto">
           {/* Header */}
           <div className="mb-4">
             <h1 className="text-2xl font-bold gold-text mb-1">MOAB - Supervision Dashboard</h1>
@@ -122,7 +123,7 @@ const DashboardPage = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3 mb-4">
           <div className="card-aurexia p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -130,6 +131,26 @@ const DashboardPage = () => {
                 <p className="text-xl font-bold text-yellow-400">{stats?.total_open_orders || 0}</p>
               </div>
               <Factory className="w-6 h-6 text-yellow-500/50" />
+            </div>
+          </div>
+
+          <div className="card-aurexia p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-xs">Completed Orders</p>
+                <p className="text-xl font-bold text-green-400">{stats?.total_completed_orders || 0}</p>
+              </div>
+              <Package className="w-6 h-6 text-green-500/50" />
+            </div>
+          </div>
+
+          <div className="card-aurexia p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-xs">Shipped Orders</p>
+                <p className="text-xl font-bold text-cyan-400">{stats?.total_shipped_orders || 0}</p>
+              </div>
+              <Truck className="w-6 h-6 text-cyan-500/50" />
             </div>
           </div>
 
@@ -201,8 +222,8 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Production Orders Table */}
-        <div className="card-aurexia p-4 flex-1 min-h-0 relative">
+          {/* Production Orders Table */}
+        <div className="card-aurexia p-4 flex-1 min-h-[400px] relative">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-200">Production Orders</h3>
             {filterRisk && (
@@ -215,7 +236,7 @@ const DashboardPage = () => {
             )}
           </div>
 
-          <div className="absolute inset-0 pt-12 px-4 pb-16 overflow-x-auto overflow-y-hidden">
+          <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: 'calc(100vh - 600px)' }}>
             <table className="w-full text-sm">
               <thead className="bg-black/50 backdrop-blur-sm">
                 <tr className="border-b border-yellow-500/20">
@@ -242,7 +263,14 @@ const DashboardPage = () => {
                       </div>
                     </td>
                     <td className="py-2 px-3 text-center text-gray-200 text-xs">
-                      {item.quantity_completed} / {item.quantity}
+                      <div className="flex flex-col items-center">
+                        <span>{item.quantity_completed} / {item.quantity}</span>
+                        {item.quantity_shipped > 0 && (
+                          <span className="text-[10px] text-blue-400 mt-0.5">
+                            Shipped: {item.quantity_shipped}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-2 px-3">
                       <div className="flex items-center justify-center">
@@ -280,8 +308,8 @@ const DashboardPage = () => {
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 bg-gradient-to-t from-black/80 to-transparent">
-              <div className="flex items-center justify-between pt-3 border-t border-gray-800">
+            <div className="mt-4 pt-4 border-t border-gray-800">
+              <div className="flex items-center justify-between">
                 <div className="text-xs text-gray-400">
                   Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredProduction.length)} of {filteredProduction.length} orders
                 </div>

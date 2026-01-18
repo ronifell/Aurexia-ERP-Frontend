@@ -6,7 +6,7 @@ import PageModal from '@/components/PageModal';
 import { salesOrdersAPI } from '@/lib/api';
 import { useSalesOrders, useCustomers, usePartNumbers, useCurrentUser } from '@/lib/hooks';
 import { SalesOrder, Customer, PartNumber, User } from '@/lib/types';
-import { Plus, Search, Eye, Edit, Trash2, X, ShoppingCart, Calendar, Package } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Trash2, X, ShoppingCart, Calendar, Package, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface OrderItem {
@@ -213,6 +213,20 @@ const SalesOrdersPage = () => {
     }, 0);
   };
 
+  const calculateTotalShipped = (order: SalesOrder): number => {
+    if (!order.items || order.items.length === 0) return 0;
+    return order.items.reduce((sum, item) => {
+      return sum + (item.quantity_shipped || 0);
+    }, 0);
+  };
+
+  const calculateTotalOrdered = (order: SalesOrder): number => {
+    if (!order.items || order.items.length === 0) return 0;
+    return order.items.reduce((sum, item) => {
+      return sum + (item.quantity || 0);
+    }, 0);
+  };
+
   const calculateCurrentOrderTotal = (): number => {
     return orderItems.reduce((sum, item) => {
       if (item.part_number_id > 0 && item.quantity > 0 && item.unit_price) {
@@ -230,6 +244,46 @@ const SalesOrdersPage = () => {
     return 0;
   };
 
+  const handleExport = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        toast.error('Authentication required');
+        return;
+      }
+
+      toast.loading('Generating Excel file...');
+      
+      const response = await fetch('http://localhost:8000/api/exports/sales-orders', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sales_orders_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.dismiss();
+      toast.success('Sales orders exported successfully!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error('Failed to export sales orders');
+      console.error('Export error:', error);
+    }
+  };
+
   if (loading) {
     return (
       <PageModal>
@@ -245,8 +299,8 @@ const SalesOrdersPage = () => {
 
   return (
     <PageModal>
-      <div className="h-full overflow-hidden flex flex-col px-6">
-          <div className="w-full py-4 h-full flex flex-col max-w-[2000px] mx-auto">
+      <div className="min-h-full flex flex-col px-6 py-4">
+          <div className="w-full py-4 flex flex-col max-w-[2000px] mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="flex items-center gap-3">
@@ -263,13 +317,23 @@ const SalesOrdersPage = () => {
               </div>
               <p className="text-gray-400 text-sm">Customer Purchase Orders</p>
             </div>
-            <button 
-              onClick={() => setShowModal(true)}
-              className="btn-aurexia flex items-center space-x-2 text-sm px-4 py-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>New Order</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handleExport}
+                className="flex items-center space-x-2 text-sm px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 font-semibold rounded-lg transition-colors"
+                title="Export to Excel"
+              >
+                <Download className="w-4 h-4" />
+                <span>Export</span>
+              </button>
+              <button 
+                onClick={() => setShowModal(true)}
+                className="btn-aurexia flex items-center space-x-2 text-sm px-4 py-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>New Order</span>
+              </button>
+            </div>
           </div>
 
           {/* Search */}
@@ -287,8 +351,8 @@ const SalesOrdersPage = () => {
           </div>
 
           {/* Orders Table */}
-          <div className="card-aurexia p-4 flex-1 min-h-0 relative">
-            <div className="absolute inset-0 p-4 overflow-x-auto overflow-y-hidden">
+          <div className="card-aurexia p-4 flex-1 min-h-[400px]">
+            <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: 'calc(100vh - 500px)' }}>
               <table className="w-full text-sm">
                 <thead className="bg-black/50 backdrop-blur-sm">
                   <tr className="border-b border-yellow-500/20">
@@ -297,6 +361,8 @@ const SalesOrdersPage = () => {
                     <th className="text-center py-2 px-3 text-gray-400 font-medium text-xs">Order Date</th>
                     <th className="text-center py-2 px-3 text-gray-400 font-medium text-xs">Due Date</th>
                     <th className="text-center py-2 px-3 text-gray-400 font-medium text-xs">Items</th>
+                    <th className="text-center py-2 px-3 text-gray-400 font-medium text-xs">Qty Ordered</th>
+                    <th className="text-center py-2 px-3 text-gray-400 font-medium text-xs">Qty Shipped</th>
                     {canViewPrices && (
                       <th className="text-right py-2 px-3 text-gray-400 font-medium text-xs">Total Amount</th>
                     )}
@@ -307,13 +373,15 @@ const SalesOrdersPage = () => {
                 <tbody>
                   {filteredOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={canViewPrices ? 8 : 7} className="text-center py-8 text-gray-500">
+                      <td colSpan={canViewPrices ? 10 : 9} className="text-center py-8 text-gray-500">
                         <p className="text-sm">No sales orders found</p>
                       </td>
                     </tr>
                   ) : (
                     filteredOrders.map((order) => {
                       const totalAmount = calculateOrderTotal(order);
+                      const totalShipped = calculateTotalShipped(order);
+                      const totalOrdered = calculateTotalOrdered(order);
                       return (
                         <tr key={order.id} className="border-b border-gray-800 hover:bg-yellow-500/5">
                           <td className="py-2 px-3 text-gray-200 font-medium text-xs">{order.po_number}</td>
@@ -326,6 +394,14 @@ const SalesOrdersPage = () => {
                           </td>
                           <td className="py-2 px-3 text-center text-gray-200 text-xs">
                             {order.items?.length || 0}
+                          </td>
+                          <td className="py-2 px-3 text-center text-gray-200 text-xs">
+                            {totalOrdered}
+                          </td>
+                          <td className="py-2 px-3 text-center text-gray-200 text-xs">
+                            <span className={`font-medium ${totalShipped > 0 ? 'text-blue-400' : 'text-gray-500'}`}>
+                              {totalShipped}
+                            </span>
                           </td>
                           {canViewPrices && (
                             <td className="py-2 px-3 text-right text-gray-200 font-medium text-xs">

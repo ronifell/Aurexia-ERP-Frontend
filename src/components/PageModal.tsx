@@ -26,7 +26,7 @@ const PageModal: React.FC<PageModalProps> = React.memo(({ children, showSidebar 
           {showSidebar && <Sidebar />}
           
           {/* Main Content Area */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
             {children}
           </div>
         </div>

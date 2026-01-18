@@ -13,7 +13,8 @@ import {
   QrCode, 
   Users,
   Building2,
-  ClipboardCheck
+  ClipboardCheck,
+  Truck
 } from 'lucide-react';
 
 const Sidebar = React.memo(() => {
@@ -30,6 +31,7 @@ const Sidebar = React.memo(() => {
       { name: 'Production', href: '/production', icon: Factory },
       { name: 'Part Numbers', href: '/part-numbers', icon: Package },
       { name: 'Quality', href: '/inspections', icon: ClipboardCheck },
+      { name: 'Shipping', href: '/shipments', icon: Truck },
       { name: 'QR Scanner', href: '/qr-scanner', icon: QrCode },
     ];
 

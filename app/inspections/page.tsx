@@ -215,8 +215,8 @@ const InspectionsPage = () => {
 
   return (
     <PageModal>
-      <div className="h-full overflow-hidden flex flex-col px-6">
-        <div className="w-full py-4 h-full flex flex-col max-w-[2000px] mx-auto">
+      <div className="min-h-full flex flex-col px-6 py-4">
+        <div className="w-full py-4 flex flex-col max-w-[2000px] mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold gold-text mb-1">Quality Inspections</h1>
@@ -256,8 +256,8 @@ const InspectionsPage = () => {
           </div>
 
           {/* Inspections Table */}
-          <div className="card-aurexia p-4 flex-1 min-h-0 relative">
-            <div className="absolute inset-0 p-4 overflow-x-auto overflow-y-hidden">
+          <div className="card-aurexia p-4 flex-1 min-h-[400px]">
+            <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: 'calc(100vh - 500px)' }}>
               <table className="w-full text-sm">
                 <thead className="bg-black/50 backdrop-blur-sm">
                   <tr className="border-b border-yellow-500/20">

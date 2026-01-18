@@ -140,6 +140,8 @@ export interface TravelSheetOperation {
 
 export interface DashboardStats {
   total_open_orders: number;
+  total_completed_orders: number;
+  total_shipped_orders: number;
   total_in_production: number;
   total_delayed: number;
   total_at_risk: number;
@@ -155,6 +157,7 @@ export interface ProductionDashboardItem {
   part_description?: string;
   quantity: number;
   quantity_completed: number;
+  quantity_shipped: number;
   quantity_scrapped: number;
   status: string;
   due_date?: string;
@@ -177,4 +180,33 @@ export interface QualityInspection {
   rejection_reason?: string;
   notes?: string;
   created_at: string;
+}
+
+export interface Shipment {
+  id: number;
+  shipment_number: string;
+  customer_id: number;
+  customer?: Customer;
+  sales_order_id?: number;
+  sales_order?: SalesOrder;
+  shipment_date: string;
+  status: string; // 'Prepared', 'Shipped', 'Delivered'
+  tracking_number?: string;
+  notes?: string;
+  created_by?: number;
+  created_at: string;
+  items: ShipmentItem[];
+}
+
+export interface ShipmentItem {
+  id: number;
+  shipment_id: number;
+  sales_order_item_id?: number;
+  part_number_id: number;
+  part_number?: PartNumber;
+  production_order_id?: number;
+  production_order?: ProductionOrder;
+  quantity: number;
+  unit_price?: number;
+  created_at?: string;
 }

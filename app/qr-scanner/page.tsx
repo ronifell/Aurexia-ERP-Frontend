@@ -88,7 +88,7 @@ const QRScannerPage = () => {
 
   return (
     <PageModal>
-      <div className="h-full overflow-hidden flex flex-col px-4">
+      <div className="h-full overflow-y-auto flex flex-col px-4">
           <div className="max-w-4xl mx-auto py-6">
           <div className="mb-6 text-center">
             <div className="flex justify-center mb-3">

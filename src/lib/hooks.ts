@@ -9,7 +9,8 @@ import {
   partNumbersAPI, 
   productionOrdersAPI,
   authAPI,
-  processesAPI
+  processesAPI,
+  shipmentsAPI
 } from './api';
 
 // Dashboard Hooks
@@ -169,4 +170,29 @@ export const useProcesses = () => {
     }
   );
   return { processes: data || [], error, isLoading, refresh: mutate };
+};
+
+// Shipments Hooks
+export const useShipments = () => {
+  const { data, error, isLoading, mutate } = useSWR(
+    'shipments',
+    () => shipmentsAPI.getAll(),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 10000, // Cache for 10 seconds
+    }
+  );
+  return { shipments: data || [], error, isLoading, refresh: mutate };
+};
+
+export const useShipment = (id: number | null) => {
+  const { data, error, isLoading } = useSWR(
+    id ? `shipments/${id}` : null,
+    () => id ? shipmentsAPI.getById(id) : null,
+    {
+      revalidateOnFocus: false,
+    }
+  );
+  return { shipment: data, error, isLoading };
 };

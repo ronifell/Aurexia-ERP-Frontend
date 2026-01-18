@@ -303,3 +303,38 @@ export const qualityInspectionsAPI = {
     return response.data;
   },
 };
+
+// Shipments API
+export const shipmentsAPI = {
+  getAll: async (params?: any) => {
+    const response = await api.get('/shipments/', { params });
+    return response.data;
+  },
+  
+  getById: async (id: number) => {
+    const response = await api.get(`/shipments/${id}`);
+    return response.data;
+  },
+  
+  create: async (data: any) => {
+    const response = await api.post('/shipments/', data);
+    return response.data;
+  },
+  
+  update: async (id: number, data: any) => {
+    const response = await api.put(`/shipments/${id}`, data);
+    return response.data;
+  },
+  
+  delete: async (id: number) => {
+    const response = await api.delete(`/shipments/${id}`);
+    return response.data;
+  },
+  
+  updateStatus: async (id: number, status: string, trackingNumber?: string) => {
+    const response = await api.patch(`/shipments/${id}/status`, null, {
+      params: { status, tracking_number: trackingNumber },
+    });
+    return response.data;
+  },
+};
