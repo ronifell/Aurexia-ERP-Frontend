@@ -4,12 +4,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import PageModal from '@/components/PageModal';
 import { qrScannerAPI } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
 import { QrCode, CheckCircle, XCircle, Camera, CameraOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Html5Qrcode } from 'html5-qrcode';
 
 const QRScannerPage = () => {
   const router = useRouter();
+  const { user } = useAuthStore();
   const [qrCode, setQrCode] = useState('');
   const [badgeId, setBadgeId] = useState('');
   const [operationId, setOperationId] = useState<number | null>(null);
@@ -33,6 +35,13 @@ const QRScannerPage = () => {
       return;
     }
   }, [router]);
+
+  // Set default badge ID from logged-in user
+  useEffect(() => {
+    if (user?.badge_id && !badgeId) {
+      setBadgeId(user.badge_id);
+    }
+  }, [user, badgeId]);
 
   // Stop scanning when component unmounts
   useEffect(() => {
@@ -151,7 +160,8 @@ const QRScannerPage = () => {
         } else {
           // Operation started successfully
           setQrCode('');
-          setBadgeId('');
+          // Reset badge ID to user's default badge ID
+          setBadgeId(user?.badge_id || '');
         }
       } else {
         toast.error(result.message);
@@ -186,7 +196,8 @@ const QRScannerPage = () => {
       setOperatorNotes('');
       setMachineId('');
       setQrCode('');
-      setBadgeId('');
+      // Reset badge ID to user's default badge ID
+      setBadgeId(user?.badge_id || '');
       setScanResult(null);
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to complete operation');
@@ -223,12 +234,14 @@ const QRScannerPage = () => {
                     placeholder="Scan operator badge..."
                     required
                     autoFocus
-                    className="w-full px-4 py-3 pr-12 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                    disabled
+                    className="w-full px-4 py-3 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
                   />
+                  {/* Camera button hidden but kept for future use */}
                   <button
                     type="button"
                     onClick={() => activeField === 'badge' ? stopScanning() : startScanning('badge')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10 rounded-lg transition-colors"
+                    className="hidden absolute right-2 top-1/2 -translate-y-1/2 p-2 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10 rounded-lg transition-colors"
                     title={activeField === 'badge' ? 'Stop camera' : 'Start camera scanner'}
                   >
                     {activeField === 'badge' ? (
@@ -238,9 +251,9 @@ const QRScannerPage = () => {
                     )}
                   </button>
                 </div>
-                {/* Camera scanner container for badge */}
+                {/* Camera scanner container for badge - hidden but kept for future use */}
                 {activeField === 'badge' && (
-                  <div className="mt-3">
+                  <div className="hidden mt-3">
                     <div id="badge-scanner" ref={badgeScannerRef} className="w-full max-w-md mx-auto rounded-lg overflow-hidden border border-yellow-500/30"></div>
                     <p className="text-xs text-gray-400 text-center mt-2">Point camera at operator badge QR code</p>
                   </div>
@@ -406,7 +419,8 @@ const QRScannerPage = () => {
                     setOperationId(null);
                     setScanResult(null);
                     setQrCode('');
-                    setBadgeId('');
+                    // Reset badge ID to user's default badge ID
+                    setBadgeId(user?.badge_id || '');
                   }}
                   className="flex-1 px-4 py-2 text-sm bg-black/30 backdrop-blur-sm hover:bg-black/40 text-gray-100 font-semibold rounded-lg border border-gray-500/30"
                 >
