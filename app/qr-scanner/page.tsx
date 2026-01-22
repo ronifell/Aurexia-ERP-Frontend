@@ -62,6 +62,28 @@ const QRScannerPage = () => {
     
     const scannerElementId = field === 'badge' ? 'badge-scanner' : 'qr-scanner';
     
+    // Wait for the DOM element to be available (React needs time to render)
+    let element: HTMLElement | null = null;
+    let retries = 0;
+    const maxRetries = 20; // Increased retries for slower devices
+    
+    while (!element && retries < maxRetries) {
+      element = document.getElementById(scannerElementId);
+      if (!element) {
+        retries++;
+        if (retries >= maxRetries) {
+          const error = new Error(`HTML Element with id=${scannerElementId} not found`);
+          console.error('Error starting scanner:', error);
+          toast.error('Failed to start scanner. Please try again.');
+          setIsScanning(false);
+          setActiveField(null);
+          return;
+        }
+        // Wait a bit before retrying (React needs time to render)
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    }
+    
     try {
       const scanner = new Html5Qrcode(scannerElementId);
       scannerRef.current = scanner;
