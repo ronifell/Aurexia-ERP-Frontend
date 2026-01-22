@@ -523,7 +523,78 @@ const ProductionPage = () => {
                     ) : (
                       <select
                         value={formData.sales_order_id}
-                        onChange={(e) => setFormData({...formData, sales_order_id: e.target.value})}
+                        onChange={async (e) => {
+                          const salesOrderId = e.target.value;
+                          const selectedSO = salesOrders.find(so => so.id === parseInt(salesOrderId));
+                          
+                          // Auto-load due date from Sales Order if selected
+                          let salesOrderDueDate = '';
+                          if (selectedSO?.due_date) {
+                            try {
+                              // Convert date string to YYYY-MM-DD format for date input
+                              const dateValue = new Date(selectedSO.due_date);
+                              if (!isNaN(dateValue.getTime())) {
+                                salesOrderDueDate = dateValue.toISOString().split('T')[0];
+                              }
+                            } catch (error) {
+                              console.error('Error parsing due date:', error);
+                            }
+                          }
+                          
+                          // If Sales Order is selected, check if current part number is in that order
+                          if (salesOrderId && formData.part_number_id) {
+                            if (selectedSO && selectedSO.items) {
+                              const partNumberIdsInOrder = selectedSO.items.map(item => item.part_number_id);
+                              const currentPartInOrder = partNumberIdsInOrder.includes(parseInt(formData.part_number_id));
+                              
+                              if (!currentPartInOrder) {
+                                // Current part number is not in the selected Sales Order, reset it
+                                setFormData(prev => ({
+                                  ...prev,
+                                  sales_order_id: salesOrderId,
+                                  part_number_id: '',
+                                  quantity: '',
+                                  due_date: salesOrderDueDate
+                                }));
+                                toast('Part number cleared - please select a part number from the selected Sales Order', { icon: 'ℹ️' });
+                              } else {
+                                // Current part number is in the order, auto-load quantity
+                                const matchingItem = selectedSO.items.find(
+                                  item => item.part_number_id === parseInt(formData.part_number_id)
+                                );
+                                if (matchingItem && matchingItem.quantity) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    sales_order_id: salesOrderId,
+                                    quantity: matchingItem.quantity.toString(),
+                                    due_date: salesOrderDueDate
+                                  }));
+                                  toast.success(`Auto-loaded quantity: ${matchingItem.quantity} from Sales Order`);
+                                } else {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    sales_order_id: salesOrderId,
+                                    due_date: salesOrderDueDate
+                                  }));
+                                }
+                              }
+                            } else {
+                              // Sales Order selected but no items, just update sales order and due date
+                              setFormData(prev => ({
+                                ...prev,
+                                sales_order_id: salesOrderId,
+                                due_date: salesOrderDueDate
+                              }));
+                            }
+                          } else {
+                            // No part number selected yet, just update sales order and due date
+                            setFormData(prev => ({
+                              ...prev,
+                              sales_order_id: salesOrderId,
+                              due_date: salesOrderDueDate
+                            }));
+                          }
+                        }}
                         className="w-full px-4 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
                       >
                         <option value="">No linked sales order</option>
@@ -533,6 +604,11 @@ const ProductionPage = () => {
                           </option>
                         ))}
                       </select>
+                    )}
+                    {formData.sales_order_id && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        💡 Part numbers will be filtered to only show items from this Sales Order
+                      </p>
                     )}
                   </div>
 
@@ -552,16 +628,73 @@ const ProductionPage = () => {
                       <select
                         required
                         value={formData.part_number_id}
-                        onChange={(e) => setFormData({...formData, part_number_id: e.target.value})}
+                        onChange={async (e) => {
+                          const partNumberId = e.target.value;
+                          setFormData({...formData, part_number_id: partNumberId});
+                          
+                          // Auto-load quantity from linked sales order if selected
+                          if (partNumberId && formData.sales_order_id) {
+                            const selectedSO = salesOrders.find(so => so.id === parseInt(formData.sales_order_id));
+                            if (selectedSO && selectedSO.items) {
+                              const matchingItem = selectedSO.items.find(
+                                item => item.part_number_id === parseInt(partNumberId)
+                              );
+                              if (matchingItem && matchingItem.quantity) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  part_number_id: partNumberId,
+                                  quantity: matchingItem.quantity.toString()
+                                }));
+                                toast.success(`Auto-loaded quantity: ${matchingItem.quantity} from Sales Order`);
+                              }
+                            }
+                          }
+                        }}
                         className="w-full px-4 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
                       >
                         <option value="">Select part number...</option>
-                        {partNumbers.map(pn => (
-                          <option key={pn.id} value={pn.id}>
-                            {pn.part_number} {pn.description ? `- ${pn.description}` : ''}
-                          </option>
-                        ))}
+                        {(() => {
+                          // If Sales Order is selected, filter to only show part numbers in that order
+                          if (formData.sales_order_id) {
+                            const selectedSO = salesOrders.find(so => so.id === parseInt(formData.sales_order_id));
+                            if (selectedSO && selectedSO.items && selectedSO.items.length > 0) {
+                              const partNumberIdsInOrder = selectedSO.items.map(item => item.part_number_id);
+                              const filteredPartNumbers = partNumbers.filter(pn => partNumberIdsInOrder.includes(pn.id));
+                              
+                              if (filteredPartNumbers.length === 0) {
+                                return (
+                                  <option value="" disabled>
+                                    No part numbers in selected Sales Order
+                                  </option>
+                                );
+                              }
+                              
+                              return filteredPartNumbers.map(pn => (
+                                <option key={pn.id} value={pn.id}>
+                                  {pn.part_number} {pn.description ? `- ${pn.description}` : ''}
+                                </option>
+                              ));
+                            } else {
+                              return (
+                                <option value="" disabled>
+                                  Selected Sales Order has no items
+                                </option>
+                              );
+                            }
+                          }
+                          // If no Sales Order selected, show all part numbers
+                          return partNumbers.map(pn => (
+                            <option key={pn.id} value={pn.id}>
+                              {pn.part_number} {pn.description ? `- ${pn.description}` : ''}
+                            </option>
+                          ));
+                        })()}
                       </select>
+                    )}
+                    {formData.sales_order_id && !formData.part_number_id && (
+                      <p className="mt-1 text-xs text-yellow-400">
+                        ⚠️ Please select a part number from the selected Sales Order
+                      </p>
                     )}
                   </div>
 

@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import PageModal from '@/components/PageModal';
 import { qrScannerAPI } from '@/lib/api';
-import { QrCode, CheckCircle, XCircle } from 'lucide-react';
+import { QrCode, CheckCircle, XCircle, Camera, CameraOff } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Html5Qrcode } from 'html5-qrcode';
 
 const QRScannerPage = () => {
   const router = useRouter();
@@ -19,6 +20,11 @@ const QRScannerPage = () => {
   const [machineId, setMachineId] = useState('');
   const [scanResult, setScanResult] = useState<any>(null);
   const [showCompletionForm, setShowCompletionForm] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [activeField, setActiveField] = useState<'badge' | 'qr' | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const badgeScannerRef = useRef<HTMLDivElement>(null);
+  const qrScannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -28,8 +34,87 @@ const QRScannerPage = () => {
     }
   }, [router]);
 
+  // Stop scanning when component unmounts
+  useEffect(() => {
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => {
+          // Ignore errors when stopping
+        });
+      }
+    };
+  }, []);
+
+  const startScanning = async (field: 'badge' | 'qr') => {
+    // Stop any existing scanner first
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop();
+        await scannerRef.current.clear();
+      } catch (error) {
+        // Ignore errors when stopping
+      }
+      scannerRef.current = null;
+    }
+
+    setActiveField(field);
+    setIsScanning(true);
+    
+    const scannerElementId = field === 'badge' ? 'badge-scanner' : 'qr-scanner';
+    
+    try {
+      const scanner = new Html5Qrcode(scannerElementId);
+      scannerRef.current = scanner;
+
+      await scanner.start(
+        { facingMode: 'environment' }, // Use back camera
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+        },
+        (decodedText) => {
+          // Successfully scanned
+          if (field === 'badge') {
+            setBadgeId(decodedText);
+          } else {
+            setQrCode(decodedText);
+          }
+          stopScanning();
+          toast.success('QR code scanned successfully!');
+        },
+        (errorMessage) => {
+          // Ignore scanning errors (they're frequent and expected)
+        }
+      );
+    } catch (error: any) {
+      console.error('Error starting scanner:', error);
+      toast.error('Failed to start camera. Please check permissions.');
+      setIsScanning(false);
+      setActiveField(null);
+    }
+  };
+
+  const stopScanning = async () => {
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop();
+        await scannerRef.current.clear();
+      } catch (error) {
+        // Ignore errors
+      }
+      scannerRef.current = null;
+    }
+    setIsScanning(false);
+    setActiveField(null);
+  };
+
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Stop scanning before submitting
+    if (scannerRef.current) {
+      await stopScanning();
+    }
     
     try {
       const result = await qrScannerAPI.scan(qrCode, badgeId);
@@ -108,29 +193,71 @@ const QRScannerPage = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Operator Badge ID
                 </label>
-                <input
-                  type="text"
-                  value={badgeId}
-                  onChange={(e) => setBadgeId(e.target.value)}
-                  placeholder="Scan operator badge..."
-                  required
-                  autoFocus
-                  className="w-full px-4 py-3 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={badgeId}
+                    onChange={(e) => setBadgeId(e.target.value)}
+                    placeholder="Scan operator badge..."
+                    required
+                    autoFocus
+                    className="w-full px-4 py-3 pr-12 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => activeField === 'badge' ? stopScanning() : startScanning('badge')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10 rounded-lg transition-colors"
+                    title={activeField === 'badge' ? 'Stop camera' : 'Start camera scanner'}
+                  >
+                    {activeField === 'badge' ? (
+                      <CameraOff className="w-5 h-5" />
+                    ) : (
+                      <Camera className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+                {/* Camera scanner container for badge */}
+                {activeField === 'badge' && (
+                  <div className="mt-3">
+                    <div id="badge-scanner" ref={badgeScannerRef} className="w-full max-w-md mx-auto rounded-lg overflow-hidden border border-yellow-500/30"></div>
+                    <p className="text-xs text-gray-400 text-center mt-2">Point camera at operator badge QR code</p>
+                  </div>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Operation QR Code
                 </label>
-                <input
-                  type="text"
-                  value={qrCode}
-                  onChange={(e) => setQrCode(e.target.value)}
-                  placeholder="Scan operation QR code..."
-                  required
-                  className="w-full px-4 py-3 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={qrCode}
+                    onChange={(e) => setQrCode(e.target.value)}
+                    placeholder="Scan operation QR code..."
+                    required
+                    className="w-full px-4 py-3 pr-12 bg-black/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => activeField === 'qr' ? stopScanning() : startScanning('qr')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10 rounded-lg transition-colors"
+                    title={activeField === 'qr' ? 'Stop camera' : 'Start camera scanner'}
+                  >
+                    {activeField === 'qr' ? (
+                      <CameraOff className="w-5 h-5" />
+                    ) : (
+                      <Camera className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+                {/* Camera scanner container for QR code */}
+                {activeField === 'qr' && (
+                  <div className="mt-3">
+                    <div id="qr-scanner" ref={qrScannerRef} className="w-full max-w-md mx-auto rounded-lg overflow-hidden border border-yellow-500/30"></div>
+                    <p className="text-xs text-gray-400 text-center mt-2">Point camera at operation QR code</p>
+                  </div>
+                )}
               </div>
 
               <button
@@ -248,7 +375,11 @@ const QRScannerPage = () => {
               <div className="flex space-x-4">
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
+                    // Stop scanning if active
+                    if (scannerRef.current) {
+                      await stopScanning();
+                    }
                     setShowCompletionForm(false);
                     setOperationId(null);
                     setScanResult(null);
@@ -274,8 +405,8 @@ const QRScannerPage = () => {
         <div className="mt-6 card-aurexia p-4 max-w-2xl mx-auto">
           <h3 className="text-sm font-semibold text-gray-200 mb-2">Instructions</h3>
           <ol className="space-y-1 text-xs text-gray-400">
-            <li>1. Scan your operator badge ID</li>
-            <li>2. Scan the operation QR code from the travel sheet</li>
+            <li>1. Click the camera icon to scan your operator badge ID or enter manually</li>
+            <li>2. Click the camera icon to scan the operation QR code from the travel sheet or enter manually</li>
             <li>3. If starting an operation, it will be marked as "In Progress"</li>
             <li>4. Scan again to complete the operation and enter quantities</li>
             <li>5. Enter good, scrap, and pending quantities</li>

@@ -72,8 +72,82 @@ const InspectionsPage = () => {
     }
   };
 
+  const handleQuantityChange = (field: 'quantity_inspected' | 'quantity_approved' | 'quantity_rejected', value: string) => {
+    const numValue = parseInt(value) || 0;
+    const newFormData = { ...formData };
+    newFormData[field] = value;
+
+    // Get current values from formData (before updating the changed field)
+    const currentInspected = parseInt(formData.quantity_inspected) || 0;
+    const currentApproved = parseInt(formData.quantity_approved) || 0;
+    const currentRejected = parseInt(formData.quantity_rejected) || 0;
+
+    // Get the new value of the field being changed
+    const newValue = numValue;
+
+    // Auto-calculate the third field based on the relationship: Inspected = Approved + Rejected
+    if (field === 'quantity_inspected') {
+      // If inspected changes, recalculate based on which of approved/rejected exists
+      if (currentApproved > 0 && currentRejected === 0) {
+        // We have approved, calculate rejected
+        const calculatedRejected = Math.max(0, newValue - currentApproved);
+        newFormData.quantity_rejected = calculatedRejected.toString();
+      } else if (currentRejected > 0 && currentApproved === 0) {
+        // We have rejected, calculate approved
+        const calculatedApproved = Math.max(0, newValue - currentRejected);
+        newFormData.quantity_approved = calculatedApproved.toString();
+      } else if (currentApproved > 0 && currentRejected > 0) {
+        // Both exist - don't auto-calculate, let user decide
+      }
+    } else if (field === 'quantity_approved') {
+      // If approved changes, and we have inspected, always calculate rejected
+      if (currentInspected > 0) {
+        const calculatedRejected = Math.max(0, currentInspected - newValue);
+        newFormData.quantity_rejected = calculatedRejected.toString();
+      }
+      // If approved changes and we have rejected but no inspected, calculate inspected
+      else if (currentRejected > 0 && currentInspected === 0) {
+        const calculatedInspected = newValue + currentRejected;
+        newFormData.quantity_inspected = calculatedInspected.toString();
+      }
+    } else if (field === 'quantity_rejected') {
+      // If rejected changes, and we have inspected, always calculate approved
+      if (currentInspected > 0) {
+        const calculatedApproved = Math.max(0, currentInspected - newValue);
+        newFormData.quantity_approved = calculatedApproved.toString();
+      }
+      // If rejected changes and we have approved but no inspected, calculate inspected
+      else if (currentApproved > 0 && currentInspected === 0) {
+        const calculatedInspected = currentApproved + newValue;
+        newFormData.quantity_inspected = calculatedInspected.toString();
+      }
+    }
+
+    setFormData(newFormData);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate quantities
+    const inspected = parseInt(formData.quantity_inspected) || 0;
+    const approved = parseInt(formData.quantity_approved) || 0;
+    const rejected = parseInt(formData.quantity_rejected) || 0;
+
+    // If any quantity is provided, validate the relationship
+    if (inspected > 0 || approved > 0 || rejected > 0) {
+      if (inspected > 0 && approved + rejected !== inspected) {
+        toast.error(`Quantity mismatch: Approved (${approved}) + Rejected (${rejected}) must equal Inspected (${inspected})`);
+        return;
+      }
+      if (inspected === 0 && approved > 0 && rejected > 0) {
+        // Auto-calculate inspected if both approved and rejected are provided
+        const calculatedInspected = approved + rejected;
+        formData.quantity_inspected = calculatedInspected.toString();
+        toast.success(`Auto-calculated Inspected quantity: ${calculatedInspected}`);
+      }
+    }
+
     try {
       const payload: any = {
         production_order_id: parseInt(formData.production_order_id),
@@ -361,7 +435,18 @@ const InspectionsPage = () => {
                     <select
                       required
                       value={formData.production_order_id}
-                      onChange={(e) => setFormData({...formData, production_order_id: e.target.value})}
+                      onChange={(e) => {
+                        const orderId = e.target.value;
+                        const selectedOrder = productionOrders.find(order => order.id === parseInt(orderId));
+                        setFormData({
+                          ...formData,
+                          production_order_id: orderId,
+                          quantity_inspected: selectedOrder ? selectedOrder.quantity.toString() : formData.quantity_inspected
+                        });
+                        if (selectedOrder) {
+                          toast.success(`Auto-filled Quantity Inspected: ${selectedOrder.quantity}`);
+                        }
+                      }}
                       disabled={!!editingInspection}
                       className="w-full px-4 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100 disabled:bg-black/30 disabled:text-gray-400 disabled:cursor-not-allowed"
                     >
@@ -374,6 +459,11 @@ const InspectionsPage = () => {
                     </select>
                     {editingInspection && (
                       <p className="text-xs text-gray-500 mt-1">Production Order cannot be changed</p>
+                    )}
+                    {formData.production_order_id && !editingInspection && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Quantity Inspected auto-filled from Production Order
+                      </p>
                     )}
                   </div>
 
@@ -403,10 +493,23 @@ const InspectionsPage = () => {
                       type="number"
                       min="0"
                       value={formData.quantity_inspected}
-                      onChange={(e) => setFormData({...formData, quantity_inspected: e.target.value})}
+                      onChange={(e) => handleQuantityChange('quantity_inspected', e.target.value)}
                       className="w-full px-4 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
                       placeholder="0"
                     />
+                    {(() => {
+                      const inspected = parseInt(formData.quantity_inspected) || 0;
+                      const approved = parseInt(formData.quantity_approved) || 0;
+                      const rejected = parseInt(formData.quantity_rejected) || 0;
+                      if (inspected > 0 && approved + rejected !== inspected) {
+                        return (
+                          <p className="text-xs text-red-400 mt-1">
+                            ⚠️ Approved ({approved}) + Rejected ({rejected}) = {approved + rejected}, but Inspected = {inspected}
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
 
                   {/* Quantity Approved */}
@@ -418,10 +521,23 @@ const InspectionsPage = () => {
                       type="number"
                       min="0"
                       value={formData.quantity_approved}
-                      onChange={(e) => setFormData({...formData, quantity_approved: e.target.value})}
+                      onChange={(e) => handleQuantityChange('quantity_approved', e.target.value)}
                       className="w-full px-4 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
                       placeholder="0"
                     />
+                    {(() => {
+                      const inspected = parseInt(formData.quantity_inspected) || 0;
+                      const approved = parseInt(formData.quantity_approved) || 0;
+                      const rejected = parseInt(formData.quantity_rejected) || 0;
+                      if (inspected > 0 && approved > 0 && rejected === 0 && inspected >= approved) {
+                        return (
+                          <p className="text-xs text-green-400 mt-1">
+                            ✓ Rejected auto-calculated: {Math.max(0, inspected - approved)}
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
 
                   {/* Quantity Rejected */}
@@ -433,10 +549,23 @@ const InspectionsPage = () => {
                       type="number"
                       min="0"
                       value={formData.quantity_rejected}
-                      onChange={(e) => setFormData({...formData, quantity_rejected: e.target.value})}
+                      onChange={(e) => handleQuantityChange('quantity_rejected', e.target.value)}
                       className="w-full px-4 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
                       placeholder="0"
                     />
+                    {(() => {
+                      const inspected = parseInt(formData.quantity_inspected) || 0;
+                      const approved = parseInt(formData.quantity_approved) || 0;
+                      const rejected = parseInt(formData.quantity_rejected) || 0;
+                      if (inspected > 0 && rejected > 0 && approved === 0 && inspected >= rejected) {
+                        return (
+                          <p className="text-xs text-green-400 mt-1">
+                            ✓ Approved auto-calculated: {Math.max(0, inspected - rejected)}
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
 
                   {/* Rejection Reason (shown when status is Rejected) */}

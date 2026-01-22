@@ -6,7 +6,7 @@ import PageModal from '@/components/PageModal';
 import { partNumbersAPI } from '@/lib/api';
 import { usePartNumbers, useCustomers, useProcesses } from '@/lib/hooks';
 import { PartNumber, Customer, Process } from '@/lib/types';
-import { Plus, Search, Eye, Trash2, ArrowUp, ArrowDown, X } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, ArrowUp, ArrowDown, X, Package, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface RoutingFormData {
@@ -19,6 +19,8 @@ const PartNumbersPage = () => {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingPartNumber, setViewingPartNumber] = useState<PartNumber | null>(null);
   const [formData, setFormData] = useState({
     part_number: '',
     customer_id: '',
@@ -89,6 +91,17 @@ const PartNumbersPage = () => {
   const handleCloseModal = () => {
     setShowModal(false);
     resetForm();
+  };
+
+  const handleView = async (partNumber: PartNumber) => {
+    try {
+      // Fetch full part number details with routings
+      const fullPartNumber = await partNumbersAPI.getById(partNumber.id);
+      setViewingPartNumber(fullPartNumber);
+      setShowViewModal(true);
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || 'Failed to load part number details');
+    }
   };
 
   const addRouting = () => {
@@ -223,7 +236,11 @@ const PartNumbersPage = () => {
                         </td>
                         <td className="py-2 px-3">
                           <div className="flex justify-center space-x-1">
-                            <button className="p-1.5 hover:bg-yellow-500/10 rounded-lg text-gray-400 hover:text-yellow-400">
+                            <button 
+                              onClick={() => handleView(pn)}
+                              className="p-1.5 hover:bg-yellow-500/10 rounded-lg text-gray-400 hover:text-yellow-400"
+                              title="View part number details"
+                            >
                               <Eye className="w-3.5 h-3.5" />
                             </button>
                           </div>
@@ -442,6 +459,167 @@ const PartNumbersPage = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* View Part Number Modal */}
+        {showViewModal && viewingPartNumber && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="card-aurexia p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-100">
+                  Part Number Details
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowViewModal(false);
+                    setViewingPartNumber(null);
+                  }}
+                  className="p-2 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-gray-200"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Part Number</p>
+                    <p className="text-sm font-mono text-yellow-400 font-bold">{viewingPartNumber.part_number}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Status</p>
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                      viewingPartNumber.is_active 
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                        : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                    }`}>
+                      {viewingPartNumber.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Material Type</p>
+                    <p className="text-sm text-gray-300">{viewingPartNumber.material_type || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Unit Price</p>
+                    <p className="text-sm text-gray-300">
+                      {viewingPartNumber.unit_price ? `$${Number(viewingPartNumber.unit_price).toFixed(2)}` : '-'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Description */}
+                {viewingPartNumber.description && (
+                  <div className="border-t border-yellow-500/20 pt-4">
+                    <h3 className="text-lg font-semibold text-gray-200 mb-2">Description</h3>
+                    <p className="text-sm text-gray-300 bg-black/30 p-4 rounded-lg whitespace-pre-wrap">
+                      {viewingPartNumber.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Customer Information */}
+                {viewingPartNumber.customer && (
+                  <div className="border-t border-yellow-500/20 pt-4">
+                    <h3 className="text-lg font-semibold text-gray-200 mb-3 flex items-center gap-2">
+                      <Package className="w-5 h-5" />
+                      Customer Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-black/30 p-4 rounded-lg">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Customer Code</p>
+                        <p className="text-sm font-mono text-yellow-400">{viewingPartNumber.customer.code}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Company Name</p>
+                        <p className="text-sm text-gray-300">{viewingPartNumber.customer.name}</p>
+                      </div>
+                      {viewingPartNumber.customer.contact_person && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Contact Person</p>
+                          <p className="text-sm text-gray-300">{viewingPartNumber.customer.contact_person}</p>
+                        </div>
+                      )}
+                      {viewingPartNumber.customer.email && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Email</p>
+                          <p className="text-sm text-gray-300">{viewingPartNumber.customer.email}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Production Routing */}
+                <div className="border-t border-yellow-500/20 pt-4">
+                  <div className="mb-3">
+                    <h3 className="text-lg font-semibold text-gray-200 flex items-center gap-2">
+                      <Settings className="w-5 h-5" />
+                      Production Routing
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {viewingPartNumber.routings?.length || 0} process(es) defined
+                    </p>
+                  </div>
+                  {viewingPartNumber.routings && viewingPartNumber.routings.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-black/50">
+                          <tr className="border-b border-yellow-500/20">
+                            <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Sequence</th>
+                            <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Process</th>
+                            <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Process Code</th>
+                            <th className="text-center py-2 px-3 text-gray-400 font-medium text-xs">Standard Time (min)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...viewingPartNumber.routings]
+                            .sort((a, b) => a.sequence_number - b.sequence_number)
+                            .map((routing) => (
+                              <tr key={routing.id} className="border-b border-gray-800">
+                                <td className="py-2 px-3">
+                                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-bold">
+                                    {routing.sequence_number}
+                                  </span>
+                                </td>
+                                <td className="py-2 px-3 text-gray-300 text-xs">
+                                  {routing.process?.name || `Process ${routing.process_id}`}
+                                </td>
+                                <td className="py-2 px-3">
+                                  <code className="text-xs bg-gray-800 text-yellow-400 px-2 py-1 rounded font-mono">
+                                    {routing.process?.code || '-'}
+                                  </code>
+                                </td>
+                                <td className="py-2 px-3 text-center text-gray-300 text-xs">
+                                  {routing.standard_time_minutes ? `${routing.standard_time_minutes} min` : '-'}
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-black/20 rounded-lg border border-gray-800">
+                      <p className="text-sm text-gray-500">No production routing defined</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-6 border-t border-yellow-500/20">
+                  <button
+                    onClick={() => {
+                      setShowViewModal(false);
+                      setViewingPartNumber(null);
+                    }}
+                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-lg"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -5,12 +5,17 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
-// Create axios instance
+// Create axios instance for regular API calls
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+// Create a separate axios instance for login (no default headers, no interceptors)
+const loginApi = axios.create({
+  baseURL: API_BASE_URL,
 });
 
 // Add auth token to requests
@@ -45,14 +50,52 @@ api.interceptors.response.use(
 // Authentication API
 export const authAPI = {
   login: async (username: string, password: string) => {
-    const formData = new FormData();
-    formData.append('username', username);
-    formData.append('password', password);
+    // OAuth2PasswordRequestForm expects application/x-www-form-urlencoded
+    // Use URLSearchParams and convert to string manually
+    const params = new URLSearchParams();
+    params.append('username', username);
+    params.append('password', password);
+    const formDataString = params.toString();
     
-    const response = await api.post('/auth/login', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    return response.data;
+    console.log('Login request:', { username, passwordLength: password.length, formDataString });
+    
+    // Use the loginApi instance (no interceptors, no default headers)
+    try {
+      const response = await loginApi.post(
+        '/auth/login',
+        formDataString, // Send as string
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          transformRequest: [(data) => data], // Don't transform the data
+        }
+      );
+      console.log('Login response:', response.status, response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Login error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        request: error.request ? 'Request made but no response' : null,
+      });
+      
+      // Handle axios errors properly
+      if (error.response) {
+        // Server responded with error
+        const errorMessage = error.response.data?.detail || error.response.data?.message || 'Login failed';
+        const axiosError = new Error(errorMessage) as any;
+        axiosError.response = error.response;
+        throw axiosError;
+      } else if (error.request) {
+        // Request made but no response (network/CORS error)
+        throw new Error('Network error. Please check if the server is running and CORS is configured correctly.');
+      } else {
+        // Something else happened
+        throw new Error(error.message || 'Login failed');
+      }
+    }
   },
   
   register: async (userData: any) => {
@@ -335,6 +378,11 @@ export const shipmentsAPI = {
     const response = await api.patch(`/shipments/${id}/status`, null, {
       params: { status, tracking_number: trackingNumber },
     });
+    return response.data;
+  },
+  
+  getApprovedQuantities: async (salesOrderId: number) => {
+    const response = await api.get(`/shipments/sales-order/${salesOrderId}/approved-quantities`);
     return response.data;
   },
 };

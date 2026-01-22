@@ -26,6 +26,7 @@ const LoginPage = () => {
             
             // Step 1: Login and get token
             console.log("Step 1: Calling login API...");
+            console.log("API URL:", process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api');
             const tokenData = await authAPI.login(username, password);
             console.log('✓ Login successful, token received:', tokenData);
 
@@ -64,8 +65,13 @@ const LoginPage = () => {
             console.error('Error response data:', error.response?.data);
             console.error('Error message:', error.message);
             
-            // Extract error message from API response
-            const errorMessage = error.response?.data?.detail || error.message || 'Login failed. Please try again.';
+            // Extract error message from API response (works for both axios and fetch errors)
+            let errorMessage = 'Login failed. Please try again.';
+            if (error.response?.data?.detail) {
+                errorMessage = error.response.data.detail;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
             console.log('Showing error notification:', errorMessage);
             
             // Show error notification (snackbar)

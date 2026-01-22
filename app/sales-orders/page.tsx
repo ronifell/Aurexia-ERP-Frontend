@@ -135,12 +135,20 @@ const SalesOrdersPage = () => {
   };
 
   const handleView = async (order: SalesOrder) => {
+    console.log('handleView called for order:', order.id);
     try {
+      toast.loading('Loading order details...', { id: 'loading-order' });
       const fullOrder = await salesOrdersAPI.getById(order.id);
+      console.log('Order loaded:', fullOrder);
+      toast.dismiss('loading-order');
       setViewingOrder(fullOrder);
       setShowViewModal(true);
-    } catch (error) {
-      toast.error('Failed to load order details');
+      console.log('Modal should be visible now. showViewModal:', true, 'viewingOrder:', fullOrder);
+    } catch (error: any) {
+      toast.dismiss('loading-order');
+      console.error('Error loading order details:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to load order details';
+      toast.error(errorMessage);
     }
   };
 
@@ -238,9 +246,23 @@ const SalesOrdersPage = () => {
 
   const calculateOrderTotal = (order: SalesOrder): number => {
     if (!order.items || order.items.length === 0) return 0;
+    // Total Amount = Original order total (static, doesn't change with shipments)
     return order.items.reduce((sum, item) => {
       const price = item.total_price ? Number(item.total_price) : 0;
       return sum + (isNaN(price) ? 0 : price);
+    }, 0);
+  };
+
+  const calculateRemainingAmount = (order: SalesOrder): number => {
+    if (!order.items || order.items.length === 0) return 0;
+    // Remaining Amount = Total Amount minus shipped items value (dynamic)
+    return order.items.reduce((sum, item) => {
+      const unitPrice = item.unit_price ? Number(item.unit_price) : 0;
+      const quantityShipped = item.quantity_shipped || 0;
+      const originalTotal = item.total_price ? Number(item.total_price) : 0;
+      // Remaining = Original total - (shipped quantity * unit price)
+      const remaining = originalTotal - (quantityShipped * unitPrice);
+      return sum + Math.max(0, remaining); // Don't go negative
     }, 0);
   };
 
@@ -411,6 +433,7 @@ const SalesOrdersPage = () => {
                   ) : (
                     filteredOrders.map((order) => {
                       const totalAmount = calculateOrderTotal(order);
+                      const remainingAmount = calculateRemainingAmount(order);
                       const totalShipped = calculateTotalShipped(order);
                       const totalOrdered = calculateTotalOrdered(order);
                       return (
@@ -437,9 +460,16 @@ const SalesOrdersPage = () => {
                           {canViewPrices && (
                             <td className="py-2 px-3 text-right text-gray-200 font-medium text-xs">
                               {totalAmount > 0 ? (
-                                <span className="text-green-400">
-                                  ${totalAmount.toFixed(2)}
-                                </span>
+                                <div className="flex flex-col items-end">
+                                  <span className="text-green-400" title="Original Order Total">
+                                    ${totalAmount.toFixed(2)}
+                                  </span>
+                                  {totalShipped > 0 && remainingAmount < totalAmount && (
+                                    <span className="text-xs text-gray-500" title="Remaining Amount">
+                                      Remaining: ${remainingAmount.toFixed(2)}
+                                    </span>
+                                  )}
+                                </div>
                               ) : (
                                 <span className="text-gray-500">-</span>
                               )}
@@ -455,9 +485,14 @@ const SalesOrdersPage = () => {
                           <td className="py-2 px-3">
                             <div className="flex justify-center space-x-1">
                               <button 
-                                onClick={() => handleView(order)}
-                                className="p-1.5 hover:bg-blue-500/10 rounded-lg text-gray-400 hover:text-blue-400"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleView(order);
+                                }}
+                                className="p-1.5 hover:bg-blue-500/10 rounded-lg text-gray-400 hover:text-blue-400 transition-colors cursor-pointer"
                                 title="View order"
+                                type="button"
                               >
                                 <Eye className="w-3.5 h-3.5" />
                               </button>
@@ -727,7 +762,7 @@ const SalesOrdersPage = () => {
 
         {/* View Order Modal */}
         {showViewModal && viewingOrder && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4" style={{ zIndex: 9999 }}>
             <div className="card-aurexia p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-100">
@@ -840,10 +875,10 @@ const SalesOrdersPage = () => {
                             {canViewPrices && (
                               <>
                                 <td className="py-2 px-3 text-right text-gray-300 text-xs">
-                                  {item.unit_price ? `$${item.unit_price.toFixed(2)}` : '-'}
+                                  {item.unit_price ? `$${Number(item.unit_price).toFixed(2)}` : '-'}
                                 </td>
                                 <td className="py-2 px-3 text-right text-gray-300 text-xs">
-                                  {item.total_price ? `$${item.total_price.toFixed(2)}` : '-'}
+                                  {item.total_price ? `$${Number(item.total_price).toFixed(2)}` : '-'}
                                 </td>
                               </>
                             )}

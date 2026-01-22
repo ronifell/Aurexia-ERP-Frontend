@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import PageModal from '@/components/PageModal';
-import { shipmentsAPI } from '@/lib/api';
+import { shipmentsAPI, salesOrdersAPI } from '@/lib/api';
 import { useShipments, useCustomers, usePartNumbers, useSalesOrders, useProductionOrders, useCurrentUser } from '@/lib/hooks';
 import { Shipment, Customer, PartNumber, SalesOrder, ProductionOrder, User } from '@/lib/types';
 import { Plus, Search, Eye, Edit, Trash2, X, Package, Truck, CheckCircle, Calendar, Download } from 'lucide-react';
@@ -34,6 +34,7 @@ const ShipmentsPage = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingShipment, setViewingShipment] = useState<Shipment | null>(null);
   const [editingShipment, setEditingShipment] = useState<Shipment | null>(null);
+  const [approvedQuantities, setApprovedQuantities] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     customer_id: '',
     sales_order_id: '',
@@ -228,6 +229,7 @@ const ShipmentsPage = () => {
     setShowViewModal(false);
     setEditingShipment(null);
     setViewingShipment(null);
+    setApprovedQuantities([]); // Reset approved quantities when closing modal
   };
 
   const addShipmentItem = () => {
@@ -537,7 +539,45 @@ const ShipmentsPage = () => {
                     </label>
                     <select
                       value={formData.sales_order_id}
-                      onChange={(e) => setFormData({...formData, sales_order_id: e.target.value})}
+                      onChange={async (e) => {
+                        const salesOrderId = e.target.value;
+                        setFormData({...formData, sales_order_id: salesOrderId});
+                        
+                        // When sales order is selected, load approved quantities and show part numbers
+                        if (salesOrderId) {
+                          try {
+                            const approvedQtys = await shipmentsAPI.getApprovedQuantities(parseInt(salesOrderId));
+                            setApprovedQuantities(approvedQtys || []);
+                            
+                            // Auto-populate shipment items with part numbers from PO
+                            if (approvedQtys && approvedQtys.length > 0) {
+                              const selectedSO = salesOrders.find(so => so.id === parseInt(salesOrderId));
+                              if (selectedSO && selectedSO.items) {
+                                const newItems = selectedSO.items.map(item => {
+                                  const approved = approvedQtys.find((aq: any) => aq.part_number_id === item.part_number_id);
+                                  return {
+                                    part_number_id: item.part_number_id,
+                                    quantity: approved?.available_to_ship || 0, // Auto-suggest approved quantity
+                                    unit_price: item.unit_price,
+                                    production_order_id: undefined,
+                                    sales_order_item_id: item.id,
+                                  };
+                                }).filter(item => item.quantity > 0); // Only include items with available quantity
+                                
+                                if (newItems.length > 0) {
+                                  setShipmentItems(newItems);
+                                  toast.success(`Loaded ${newItems.length} part number(s) from Sales Order with approved quantities`);
+                                }
+                              }
+                            }
+                          } catch (error: any) {
+                            console.error('Error loading approved quantities:', error);
+                            setApprovedQuantities([]);
+                          }
+                        } else {
+                          setApprovedQuantities([]);
+                        }
+                      }}
                       className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white 
                                focus:outline-none focus:border-yellow-500"
                     >
@@ -690,17 +730,52 @@ const ShipmentsPage = () => {
                             <select
                               required
                               value={item.part_number_id}
-                              onChange={(e) => updateShipmentItem(index, 'part_number_id', parseInt(e.target.value))}
+                              onChange={(e) => {
+                                const newPartNumberId = parseInt(e.target.value);
+                                updateShipmentItem(index, 'part_number_id', newPartNumberId);
+                                // Clear production order if it doesn't match the new part number
+                                if (newPartNumberId > 0 && item.production_order_id) {
+                                  const selectedPO = productionOrders.find(po => po.id === item.production_order_id);
+                                  if (selectedPO && selectedPO.part_number_id !== newPartNumberId) {
+                                    updateShipmentItem(index, 'production_order_id', undefined);
+                                  }
+                                }
+                              }}
                               className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm
                                        focus:outline-none focus:border-yellow-500"
                             >
                               <option value={0}>Select Part</option>
-                              {partNumbers.map(part => (
-                                <option key={part.id} value={part.id}>
-                                  {part.part_number}
-                                </option>
-                              ))}
+                              {(() => {
+                                // Filter part numbers based on Sales Order if selected
+                                let filteredParts = partNumbers;
+                                if (formData.sales_order_id) {
+                                  const selectedSO = salesOrders.find(so => so.id === parseInt(formData.sales_order_id));
+                                  if (selectedSO && selectedSO.items) {
+                                    const partNumberIdsInOrder = selectedSO.items.map(item => item.part_number_id);
+                                    filteredParts = partNumbers.filter(pn => partNumberIdsInOrder.includes(pn.id));
+                                  }
+                                }
+                                
+                                if (filteredParts.length === 0) {
+                                  return (
+                                    <option value={0} disabled>
+                                      {formData.sales_order_id ? 'No parts in selected Sales Order' : 'No parts available'}
+                                    </option>
+                                  );
+                                }
+                                
+                                return filteredParts.map(part => (
+                                  <option key={part.id} value={part.id}>
+                                    {part.part_number} {part.description ? `- ${part.description}` : ''}
+                                  </option>
+                                ));
+                              })()}
                             </select>
+                            {formData.sales_order_id && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                ✓ Filtered to Sales Order parts
+                              </p>
+                            )}
                           </div>
 
                           {/* Quantity */}
@@ -711,10 +786,44 @@ const ShipmentsPage = () => {
                               required
                               min="1"
                               value={item.quantity}
-                              onChange={(e) => updateShipmentItem(index, 'quantity', parseInt(e.target.value))}
+                              onChange={(e) => {
+                                const newQuantity = parseInt(e.target.value) || 0;
+                                updateShipmentItem(index, 'quantity', newQuantity);
+                                
+                                // Validate against PO if sales order is selected
+                                if (formData.sales_order_id && item.part_number_id) {
+                                  const approved = approvedQuantities.find((aq: any) => aq.part_number_id === item.part_number_id);
+                                  
+                                  if (approved) {
+                                    const selectedSO = salesOrders.find(so => so.id === parseInt(formData.sales_order_id));
+                                    const soItem = selectedSO?.items?.find(i => i.part_number_id === item.part_number_id);
+                                    const orderedQty = soItem?.quantity || 0;
+                                    const alreadyShipped = soItem?.quantity_shipped || 0;
+                                    const remainingToFulfill = orderedQty - alreadyShipped;
+                                    
+                                    if (newQuantity > approved.available_to_ship) {
+                                      toast.error(`Warning: Only ${approved.available_to_ship} approved pieces available. Order has ${orderedQty} total, ${alreadyShipped} shipped, ${remainingToFulfill} remaining.`, { duration: 5000 });
+                                    } else if (newQuantity > remainingToFulfill) {
+                                      toast.error(`Warning: Cannot ship more than remaining order quantity (${remainingToFulfill}).`, { duration: 5000 });
+                                    }
+                                  }
+                                }
+                              }}
                               className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm
                                        focus:outline-none focus:border-yellow-500"
                             />
+                            {/* Show approved quantity hint if sales order is selected */}
+                            {formData.sales_order_id && item.part_number_id > 0 && (() => {
+                              const approved = approvedQuantities.find((aq: any) => aq.part_number_id === item.part_number_id);
+                              if (approved) {
+                                return (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Available: {approved.available_to_ship} approved pieces
+                                  </p>
+                                );
+                              }
+                              return null;
+                            })()}
                           </div>
 
                           {/* Unit Price */}
@@ -744,12 +853,65 @@ const ShipmentsPage = () => {
                                        focus:outline-none focus:border-yellow-500"
                             >
                               <option value="">None</option>
-                              {productionOrders.map(po => (
-                                <option key={po.id} value={po.id}>
-                                  {po.po_number}
-                                </option>
-                              ))}
+                              {(() => {
+                                // Filter production orders based on Sales Order and Part Number
+                                let filteredPOs = productionOrders;
+                                
+                                // Filter by Sales Order if selected
+                                if (formData.sales_order_id) {
+                                  filteredPOs = filteredPOs.filter(po => 
+                                    po.sales_order_id === parseInt(formData.sales_order_id)
+                                  );
+                                }
+                                
+                                // Filter by Part Number if selected
+                                if (item.part_number_id > 0) {
+                                  filteredPOs = filteredPOs.filter(po => 
+                                    po.part_number_id === item.part_number_id
+                                  );
+                                }
+                                
+                                // If both Sales Order and Part Number are selected, show matching POs
+                                // If only one is selected, still filter by that one
+                                // If neither is selected, show all (but this is less common)
+                                
+                                if (filteredPOs.length === 0) {
+                                  return (
+                                    <option value="" disabled>
+                                      {formData.sales_order_id && item.part_number_id > 0 
+                                        ? 'No matching Production Orders' 
+                                        : formData.sales_order_id 
+                                          ? 'No POs for this Sales Order'
+                                          : item.part_number_id > 0
+                                            ? 'No POs for this Part Number'
+                                            : 'No Production Orders available'}
+                                    </option>
+                                  );
+                                }
+                                
+                                return filteredPOs.map(po => (
+                                  <option key={po.id} value={po.id}>
+                                    {po.po_number} {po.part_number ? `- ${po.part_number.part_number}` : ''} 
+                                    {po.status ? ` (${po.status})` : ''}
+                                  </option>
+                                ));
+                              })()}
                             </select>
+                            {(() => {
+                              const hasFilters = formData.sales_order_id || item.part_number_id > 0;
+                              if (hasFilters) {
+                                return (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    ✓ Filtered by {formData.sales_order_id && item.part_number_id > 0 
+                                      ? 'Sales Order & Part Number'
+                                      : formData.sales_order_id 
+                                        ? 'Sales Order'
+                                        : 'Part Number'}
+                                  </p>
+                                );
+                              }
+                              return null;
+                            })()}
                           </div>
                         </div>
 
@@ -867,10 +1029,10 @@ const ShipmentsPage = () => {
                             {canViewPrices && (
                               <>
                                 <td className="py-3 px-4 text-white text-right">
-                                  {item.unit_price ? `$${item.unit_price.toFixed(2)}` : '-'}
+                                  {item.unit_price ? `$${Number(item.unit_price).toFixed(2)}` : '-'}
                                 </td>
                                 <td className="py-3 px-4 text-white text-right font-medium">
-                                  {item.unit_price ? `$${(item.quantity * item.unit_price).toFixed(2)}` : '-'}
+                                  {item.unit_price ? `$${(item.quantity * Number(item.unit_price)).toFixed(2)}` : '-'}
                                 </td>
                               </>
                             )}
