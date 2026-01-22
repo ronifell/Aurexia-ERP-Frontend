@@ -47,6 +47,7 @@ export interface PartNumber {
   created_at: string;
   routings?: PartRouting[];
   materials?: PartMaterial[];
+  sub_assemblies?: PartSubAssembly[];
 }
 
 export interface Material {
@@ -65,6 +66,18 @@ export interface PartMaterial {
   part_number_id: number;
   material_id: number;
   material?: Material;
+  quantity: number;
+  unit?: string;
+  scrap_percentage?: number;
+  notes?: string;
+  created_at: string;
+}
+
+export interface PartSubAssembly {
+  id: number;
+  parent_part_id: number;
+  child_part_id: number;
+  child_part?: PartNumber; // Include child part details
   quantity: number;
   unit?: string;
   notes?: string;

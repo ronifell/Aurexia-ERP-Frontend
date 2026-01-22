@@ -19,6 +19,14 @@ interface MaterialFormData {
   material_id: number;
   quantity: number;
   unit: string;
+  scrap_percentage: number;
+  notes: string;
+}
+
+interface SubAssemblyFormData {
+  child_part_id: number;
+  quantity: number;
+  unit: string;
   notes: string;
 }
 
@@ -37,6 +45,7 @@ const PartNumbersPage = () => {
   });
   const [routings, setRoutings] = useState<RoutingFormData[]>([]);
   const [materials, setMaterials] = useState<MaterialFormData[]>([]);
+  const [subAssemblies, setSubAssemblies] = useState<SubAssemblyFormData[]>([]);
 
   // Use SWR hooks for optimized data fetching with caching
   const { partNumbers, isLoading: partNumbersLoading, refresh: refreshPartNumbers } = usePartNumbers();
@@ -80,6 +89,25 @@ const PartNumbersPage = () => {
       }
     }
     
+    // Validate sub-assemblies before submission
+    const validSubAssemblies = subAssemblies.filter(sa => sa.child_part_id > 0);
+    
+    // Check for duplicate sub-assemblies
+    const childPartIds = validSubAssemblies.map(sa => sa.child_part_id);
+    if (childPartIds.length !== new Set(childPartIds).size) {
+      toast.error('Duplicate sub-assemblies are not allowed. Please remove duplicate entries.');
+      return;
+    }
+    
+    // Validate sub-assembly quantities
+    for (const subAssembly of validSubAssemblies) {
+      if (subAssembly.quantity <= 0 || isNaN(subAssembly.quantity)) {
+        const partName = partNumbers.find((pn: PartNumber) => pn.id === subAssembly.child_part_id)?.part_number || 'selected part';
+        toast.error(`Sub-assembly quantity must be greater than 0 for ${partName}`);
+        return;
+      }
+    }
+    
     try {
       const payload = {
         part_number: formData.part_number,
@@ -96,7 +124,14 @@ const PartNumbersPage = () => {
           material_id: m.material_id,
           quantity: m.quantity,
           unit: m.unit || null,
+          scrap_percentage: m.scrap_percentage || 0,
           notes: m.notes || null,
+        })),
+        sub_assemblies: validSubAssemblies.map(sa => ({
+          child_part_id: sa.child_part_id,
+          quantity: sa.quantity,
+          unit: sa.unit || null,
+          notes: sa.notes || null,
         })),
       };
       
@@ -122,6 +157,7 @@ const PartNumbersPage = () => {
     });
     setRoutings([]);
     setMaterials([]);
+    setSubAssemblies([]);
   };
 
   const handleCloseModal = () => {
@@ -485,7 +521,7 @@ const PartNumbersPage = () => {
                     <h3 className="text-lg font-semibold text-gray-200">Material Requirements (BOM)</h3>
                     <button
                       type="button"
-                      onClick={() => setMaterials([...materials, { material_id: 0, quantity: 0.0001, unit: '', notes: '' }])}
+                      onClick={() => setMaterials([...materials, { material_id: 0, quantity: 0.0001, unit: '', scrap_percentage: 0, notes: '' }])}
                       className="btn-aurexia text-xs px-3 py-1.5 flex items-center space-x-1"
                     >
                       <Plus className="w-3 h-3" />
@@ -503,7 +539,7 @@ const PartNumbersPage = () => {
                       {materials.map((material, index) => (
                         <div key={index} className="bg-black/20 p-4 rounded-lg border border-gray-800">
                           <div className="grid grid-cols-12 gap-3 items-center">
-                            <div className="col-span-4">
+                            <div className="col-span-3">
                               <label className="block text-xs text-gray-400 mb-1">Material *</label>
                               <select
                                 required
@@ -584,7 +620,26 @@ const PartNumbersPage = () => {
                               />
                             </div>
 
-                            <div className="col-span-3">
+                            <div className="col-span-2">
+                              <label className="block text-xs text-gray-400 mb-1">Scrap %</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="100"
+                                value={material.scrap_percentage || 0}
+                                onChange={(e) => {
+                                  const updated = [...materials];
+                                  const value = parseFloat(e.target.value) || 0;
+                                  updated[index].scrap_percentage = Math.min(100, Math.max(0, value));
+                                  setMaterials(updated);
+                                }}
+                                className="w-full px-2 py-1.5 bg-black/50 border border-yellow-500/30 rounded text-gray-100 text-sm"
+                                placeholder="0.00"
+                              />
+                            </div>
+
+                            <div className="col-span-2">
                               <label className="block text-xs text-gray-400 mb-1">Notes</label>
                               <input
                                 type="text"
@@ -605,6 +660,134 @@ const PartNumbersPage = () => {
                                 onClick={() => setMaterials(materials.filter((_, i) => i !== index))}
                                 className="p-1.5 hover:bg-red-500/10 rounded text-gray-400 hover:text-red-400 mt-5"
                                 title="Remove"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Sub-Assemblies */}
+                <div className="mt-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-200">Sub-Assemblies</h3>
+                    <button
+                      type="button"
+                      onClick={() => setSubAssemblies([...subAssemblies, { child_part_id: 0, quantity: 1, unit: '', notes: '' }])}
+                      className="btn-aurexia text-xs px-3 py-1.5 flex items-center space-x-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Add Sub-Assembly</span>
+                    </button>
+                  </div>
+
+                  {subAssemblies.length === 0 ? (
+                    <div className="text-center py-8 bg-black/20 rounded-lg border border-gray-800">
+                      <p className="text-sm text-gray-500">No sub-assemblies added yet</p>
+                      <p className="text-xs text-gray-600 mt-1">Click "Add Sub-Assembly" to define part components</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {subAssemblies.map((subAssembly, index) => (
+                        <div key={index} className="bg-black/20 p-4 rounded-lg border border-gray-800">
+                          <div className="grid grid-cols-12 gap-3 items-center">
+                            <div className="col-span-4">
+                              <label className="block text-xs text-gray-400 mb-1">Part Number *</label>
+                              <select
+                                required
+                                value={subAssembly.child_part_id}
+                                onChange={(e) => {
+                                  const newPartId = parseInt(e.target.value);
+                                  
+                                  // Check for duplicate sub-assembly
+                                  const isDuplicate = subAssemblies.some((sa, i) => i !== index && sa.child_part_id === newPartId);
+                                  if (isDuplicate && newPartId > 0) {
+                                    toast.error('This part is already added as a sub-assembly. Please select a different part.');
+                                    return;
+                                  }
+                                  
+                                  const updated = [...subAssemblies];
+                                  updated[index].child_part_id = newPartId;
+                                  setSubAssemblies(updated);
+                                }}
+                                className="w-full px-3 py-1.5 bg-black/50 border border-yellow-500/30 rounded text-gray-100 text-sm"
+                              >
+                                <option value={0}>Select part number...</option>
+                                {partNumbers
+                                  .filter((pn: PartNumber) => {
+                                    // Don't show parts already selected in other rows
+                                    return !subAssemblies.some((sa, i) => i !== index && sa.child_part_id === pn.id);
+                                  })
+                                  .map((pn: PartNumber) => (
+                                    <option key={pn.id} value={pn.id}>
+                                      {pn.part_number} {pn.description ? `- ${pn.description}` : ''}
+                                    </option>
+                                  ))}
+                              </select>
+                            </div>
+
+                            <div className="col-span-2">
+                              <label className="block text-xs text-gray-400 mb-1">Quantity *</label>
+                              <input
+                                type="number"
+                                required
+                                step="0.0001"
+                                min="0.0001"
+                                value={subAssembly.quantity}
+                                onChange={(e) => {
+                                  const updated = [...subAssemblies];
+                                  const value = parseFloat(e.target.value);
+                                  // Only update if valid number, otherwise keep current value
+                                  if (!isNaN(value)) {
+                                    updated[index].quantity = value;
+                                    setSubAssemblies(updated);
+                                  }
+                                }}
+                                className="w-full px-2 py-1.5 bg-black/50 border border-yellow-500/30 rounded text-gray-100 text-sm"
+                                placeholder="1"
+                              />
+                            </div>
+
+                            <div className="col-span-2">
+                              <label className="block text-xs text-gray-400 mb-1">Unit</label>
+                              <input
+                                type="text"
+                                value={subAssembly.unit}
+                                onChange={(e) => {
+                                  const updated = [...subAssemblies];
+                                  updated[index].unit = e.target.value;
+                                  setSubAssemblies(updated);
+                                }}
+                                className="w-full px-2 py-1.5 bg-black/50 border border-yellow-500/30 rounded text-gray-100 text-sm"
+                                placeholder="pcs, units..."
+                              />
+                            </div>
+
+                            <div className="col-span-3">
+                              <label className="block text-xs text-gray-400 mb-1">Notes</label>
+                              <input
+                                type="text"
+                                value={subAssembly.notes}
+                                onChange={(e) => {
+                                  const updated = [...subAssemblies];
+                                  updated[index].notes = e.target.value;
+                                  setSubAssemblies(updated);
+                                }}
+                                className="w-full px-2 py-1.5 bg-black/50 border border-yellow-500/30 rounded text-gray-100 text-sm"
+                                placeholder="Optional notes..."
+                              />
+                            </div>
+
+                            <div className="col-span-1 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => setSubAssemblies(subAssemblies.filter((_, i) => i !== index))}
+                                className="p-1.5 hover:bg-red-500/10 rounded text-gray-400 hover:text-red-400"
+                                title="Remove Sub-Assembly"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -801,6 +984,7 @@ const PartNumbersPage = () => {
                             <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Type</th>
                             <th className="text-right py-2 px-3 text-gray-400 font-medium text-xs">Quantity</th>
                             <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Unit</th>
+                            <th className="text-right py-2 px-3 text-gray-400 font-medium text-xs">Scrap %</th>
                             <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Notes</th>
                           </tr>
                         </thead>
@@ -819,6 +1003,9 @@ const PartNumbersPage = () => {
                               <td className="py-2 px-3 text-gray-300 text-xs">
                                 {material.unit || material.material?.unit || '-'}
                               </td>
+                              <td className="py-2 px-3 text-right text-gray-300 text-xs">
+                                {material.scrap_percentage ? `${Number(material.scrap_percentage).toFixed(2)}%` : '0%'}
+                              </td>
                               <td className="py-2 px-3 text-gray-400 text-xs">
                                 {material.notes || '-'}
                               </td>
@@ -830,6 +1017,59 @@ const PartNumbersPage = () => {
                   ) : (
                     <div className="text-center py-8 bg-black/20 rounded-lg border border-gray-800">
                       <p className="text-sm text-gray-500">No material requirements defined</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Sub-Assemblies */}
+                <div className="border-t border-yellow-500/20 pt-4">
+                  <div className="mb-3">
+                    <h3 className="text-lg font-semibold text-gray-200 flex items-center gap-2">
+                      <Package className="w-5 h-5" />
+                      Sub-Assemblies
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {viewingPartNumber.sub_assemblies?.length || 0} sub-assembly(ies) required
+                    </p>
+                  </div>
+                  {viewingPartNumber.sub_assemblies && viewingPartNumber.sub_assemblies.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-black/50">
+                          <tr className="border-b border-yellow-500/20">
+                            <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Part Number</th>
+                            <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Description</th>
+                            <th className="text-right py-2 px-3 text-gray-400 font-medium text-xs">Quantity</th>
+                            <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Unit</th>
+                            <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Notes</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {viewingPartNumber.sub_assemblies.map((subAssembly) => (
+                            <tr key={subAssembly.id} className="border-b border-gray-800">
+                              <td className="py-2 px-3 text-gray-300 text-xs font-medium">
+                                {subAssembly.child_part?.part_number || `Part ID: ${subAssembly.child_part_id}`}
+                              </td>
+                              <td className="py-2 px-3 text-gray-400 text-xs">
+                                {subAssembly.child_part?.description || '-'}
+                              </td>
+                              <td className="py-2 px-3 text-right text-gray-200 text-xs font-medium">
+                                {Number(subAssembly.quantity).toFixed(4)}
+                              </td>
+                              <td className="py-2 px-3 text-gray-300 text-xs">
+                                {subAssembly.unit || '-'}
+                              </td>
+                              <td className="py-2 px-3 text-gray-400 text-xs">
+                                {subAssembly.notes || '-'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-black/20 rounded-lg border border-gray-800">
+                      <p className="text-sm text-gray-500">No sub-assemblies defined</p>
                     </div>
                   )}
                 </div>
