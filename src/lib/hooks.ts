@@ -10,7 +10,8 @@ import {
   productionOrdersAPI,
   authAPI,
   processesAPI,
-  shipmentsAPI
+  shipmentsAPI,
+  materialsAPI
 } from './api';
 
 // Dashboard Hooks
@@ -170,6 +171,20 @@ export const useProcesses = () => {
     }
   );
   return { processes: data || [], error, isLoading, refresh: mutate };
+};
+
+// Materials Hooks
+export const useMaterials = () => {
+  const { data, error, isLoading, mutate } = useSWR(
+    'materials',
+    () => materialsAPI.getAll({ is_active: true }),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 300000, // Cache for 5 minutes
+    }
+  );
+  return { materials: data || [], error, isLoading, refresh: mutate };
 };
 
 // Shipments Hooks

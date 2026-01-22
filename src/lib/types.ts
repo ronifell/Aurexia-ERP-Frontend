@@ -46,6 +46,29 @@ export interface PartNumber {
   is_active: boolean;
   created_at: string;
   routings?: PartRouting[];
+  materials?: PartMaterial[];
+}
+
+export interface Material {
+  id: number;
+  name: string;
+  type?: string;
+  unit?: string;
+  current_stock: number;
+  minimum_stock?: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface PartMaterial {
+  id: number;
+  part_number_id: number;
+  material_id: number;
+  material?: Material;
+  quantity: number;
+  unit?: string;
+  notes?: string;
+  created_at: string;
 }
 
 export interface PartRouting {

@@ -314,6 +314,19 @@ export const processesAPI = {
   },
 };
 
+// Materials API
+export const materialsAPI = {
+  getAll: async (params?: any) => {
+    const response = await api.get('/materials/list', { params });
+    return response.data;
+  },
+  
+  getById: async (id: number) => {
+    const response = await api.get(`/materials/${id}`);
+    return response.data;
+  },
+};
+
 // Quality Inspections API
 export const qualityInspectionsAPI = {
   getAll: async (params?: any) => {

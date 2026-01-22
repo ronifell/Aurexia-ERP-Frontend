@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageModal from '@/components/PageModal';
 import { partNumbersAPI } from '@/lib/api';
-import { usePartNumbers, useCustomers, useProcesses } from '@/lib/hooks';
-import { PartNumber, Customer, Process } from '@/lib/types';
+import { usePartNumbers, useCustomers, useProcesses, useMaterials } from '@/lib/hooks';
+import { PartNumber, Customer, Process, Material } from '@/lib/types';
 import { Plus, Search, Eye, Trash2, ArrowUp, ArrowDown, X, Package, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -13,6 +13,13 @@ interface RoutingFormData {
   process_id: number;
   sequence_number: number;
   standard_time_minutes: number;
+}
+
+interface MaterialFormData {
+  material_id: number;
+  quantity: number;
+  unit: string;
+  notes: string;
 }
 
 const PartNumbersPage = () => {
@@ -29,13 +36,15 @@ const PartNumbersPage = () => {
     unit_price: '',
   });
   const [routings, setRoutings] = useState<RoutingFormData[]>([]);
+  const [materials, setMaterials] = useState<MaterialFormData[]>([]);
 
   // Use SWR hooks for optimized data fetching with caching
   const { partNumbers, isLoading: partNumbersLoading, refresh: refreshPartNumbers } = usePartNumbers();
   const { customers, isLoading: customersLoading } = useCustomers();
   const { processes, isLoading: processesLoading } = useProcesses();
+  const { materials: materialsList, isLoading: materialsLoading } = useMaterials();
 
-  const loading = partNumbersLoading || customersLoading || processesLoading;
+  const loading = partNumbersLoading || customersLoading || processesLoading || materialsLoading;
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -51,6 +60,26 @@ const PartNumbersPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate materials before submission
+    const validMaterials = materials.filter(m => m.material_id > 0);
+    
+    // Check for duplicate materials
+    const materialIds = validMaterials.map(m => m.material_id);
+    if (materialIds.length !== new Set(materialIds).size) {
+      toast.error('Duplicate materials are not allowed. Please remove duplicate entries.');
+      return;
+    }
+    
+    // Validate quantities
+    for (const material of validMaterials) {
+      if (material.quantity <= 0 || isNaN(material.quantity)) {
+        const materialName = materialsList?.find((m: Material) => m.id === material.material_id)?.name || 'selected material';
+        toast.error(`Material quantity must be greater than 0 for ${materialName}`);
+        return;
+      }
+    }
+    
     try {
       const payload = {
         part_number: formData.part_number,
@@ -62,6 +91,12 @@ const PartNumbersPage = () => {
           process_id: r.process_id,
           sequence_number: r.sequence_number,
           standard_time_minutes: r.standard_time_minutes || null,
+        })),
+        materials: validMaterials.map(m => ({
+          material_id: m.material_id,
+          quantity: m.quantity,
+          unit: m.unit || null,
+          notes: m.notes || null,
         })),
       };
       
@@ -86,6 +121,7 @@ const PartNumbersPage = () => {
       unit_price: '',
     });
     setRoutings([]);
+    setMaterials([]);
   };
 
   const handleCloseModal = () => {
@@ -443,6 +479,143 @@ const PartNumbersPage = () => {
                   )}
                 </div>
 
+                {/* Material Requirements (BOM) */}
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-200">Material Requirements (BOM)</h3>
+                    <button
+                      type="button"
+                      onClick={() => setMaterials([...materials, { material_id: 0, quantity: 0.0001, unit: '', notes: '' }])}
+                      className="btn-aurexia text-xs px-3 py-1.5 flex items-center space-x-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Add Material</span>
+                    </button>
+                  </div>
+
+                  {materials.length === 0 ? (
+                    <div className="text-center py-8 bg-black/20 rounded-lg border border-gray-800">
+                      <p className="text-sm text-gray-500">No materials added yet</p>
+                      <p className="text-xs text-gray-600 mt-1">Click "Add Material" to define material requirements</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {materials.map((material, index) => (
+                        <div key={index} className="bg-black/20 p-4 rounded-lg border border-gray-800">
+                          <div className="grid grid-cols-12 gap-3 items-center">
+                            <div className="col-span-4">
+                              <label className="block text-xs text-gray-400 mb-1">Material *</label>
+                              <select
+                                required
+                                value={material.material_id}
+                                onChange={(e) => {
+                                  const newMaterialId = parseInt(e.target.value);
+                                  
+                                  // Check for duplicate material
+                                  const isDuplicate = materials.some((m, i) => i !== index && m.material_id === newMaterialId);
+                                  if (isDuplicate && newMaterialId > 0) {
+                                    toast.error('This material is already added. Please select a different material.');
+                                    return;
+                                  }
+                                  
+                                  const updated = [...materials];
+                                  updated[index].material_id = newMaterialId;
+                                  // Auto-fill unit from material if available
+                                  const selectedMaterial = materialsList?.find((m: Material) => m.id === newMaterialId);
+                                  if (selectedMaterial && selectedMaterial.unit && !updated[index].unit) {
+                                    updated[index].unit = selectedMaterial.unit;
+                                  }
+                                  setMaterials(updated);
+                                }}
+                                className="w-full px-3 py-1.5 bg-black/50 border border-yellow-500/30 rounded text-gray-100 text-sm"
+                              >
+                                <option value={0}>Select material...</option>
+                                {materialsList && materialsList.length > 0 ? (
+                                  materialsList
+                                    .filter((mat: Material) => {
+                                      // Don't show materials already selected in other rows
+                                      return !materials.some((m, i) => i !== index && m.material_id === mat.id);
+                                    })
+                                    .map((mat: Material) => (
+                                      <option key={mat.id} value={mat.id}>
+                                        {mat.name} {mat.type ? `(${mat.type})` : ''} {mat.unit ? `- ${mat.unit}` : ''}
+                                      </option>
+                                    ))
+                                ) : (
+                                  <option value={0} disabled>No materials available</option>
+                                )}
+                              </select>
+                            </div>
+
+                            <div className="col-span-2">
+                              <label className="block text-xs text-gray-400 mb-1">Quantity *</label>
+                              <input
+                                type="number"
+                                required
+                                step="0.0001"
+                                min="0.0001"
+                                value={material.quantity}
+                                onChange={(e) => {
+                                  const updated = [...materials];
+                                  const value = parseFloat(e.target.value);
+                                  // Only update if valid number, otherwise keep current value
+                                  if (!isNaN(value)) {
+                                    updated[index].quantity = value;
+                                    setMaterials(updated);
+                                  }
+                                }}
+                                className="w-full px-2 py-1.5 bg-black/50 border border-yellow-500/30 rounded text-gray-100 text-sm"
+                                placeholder="0"
+                              />
+                            </div>
+
+                            <div className="col-span-2">
+                              <label className="block text-xs text-gray-400 mb-1">Unit</label>
+                              <input
+                                type="text"
+                                value={material.unit}
+                                onChange={(e) => {
+                                  const updated = [...materials];
+                                  updated[index].unit = e.target.value;
+                                  setMaterials(updated);
+                                }}
+                                className="w-full px-2 py-1.5 bg-black/50 border border-yellow-500/30 rounded text-gray-100 text-sm"
+                                placeholder="kg, m, pcs..."
+                              />
+                            </div>
+
+                            <div className="col-span-3">
+                              <label className="block text-xs text-gray-400 mb-1">Notes</label>
+                              <input
+                                type="text"
+                                value={material.notes}
+                                onChange={(e) => {
+                                  const updated = [...materials];
+                                  updated[index].notes = e.target.value;
+                                  setMaterials(updated);
+                                }}
+                                className="w-full px-2 py-1.5 bg-black/50 border border-yellow-500/30 rounded text-gray-100 text-sm"
+                                placeholder="Optional notes..."
+                              />
+                            </div>
+
+                            <div className="col-span-1">
+                              <button
+                                type="button"
+                                onClick={() => setMaterials(materials.filter((_, i) => i !== index))}
+                                className="p-1.5 hover:bg-red-500/10 rounded text-gray-400 hover:text-red-400 mt-5"
+                                title="Remove"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex space-x-4 pt-6 border-t border-gray-800">
                   <button
                     type="button"
@@ -604,6 +777,59 @@ const PartNumbersPage = () => {
                   ) : (
                     <div className="text-center py-8 bg-black/20 rounded-lg border border-gray-800">
                       <p className="text-sm text-gray-500">No production routing defined</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Material Requirements (BOM) */}
+                <div className="border-t border-yellow-500/20 pt-4">
+                  <div className="mb-3">
+                    <h3 className="text-lg font-semibold text-gray-200 flex items-center gap-2">
+                      <Package className="w-5 h-5" />
+                      Material Requirements (BOM)
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {viewingPartNumber.materials?.length || 0} material(s) required
+                    </p>
+                  </div>
+                  {viewingPartNumber.materials && viewingPartNumber.materials.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-black/50">
+                          <tr className="border-b border-yellow-500/20">
+                            <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Material</th>
+                            <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Type</th>
+                            <th className="text-right py-2 px-3 text-gray-400 font-medium text-xs">Quantity</th>
+                            <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Unit</th>
+                            <th className="text-left py-2 px-3 text-gray-400 font-medium text-xs">Notes</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {viewingPartNumber.materials.map((material) => (
+                            <tr key={material.id} className="border-b border-gray-800">
+                              <td className="py-2 px-3 text-gray-300 text-xs font-medium">
+                                {material.material?.name || `Material ID: ${material.material_id}`}
+                              </td>
+                              <td className="py-2 px-3 text-gray-400 text-xs">
+                                {material.material?.type || '-'}
+                              </td>
+                              <td className="py-2 px-3 text-right text-gray-200 text-xs font-medium">
+                                {Number(material.quantity).toFixed(4)}
+                              </td>
+                              <td className="py-2 px-3 text-gray-300 text-xs">
+                                {material.unit || material.material?.unit || '-'}
+                              </td>
+                              <td className="py-2 px-3 text-gray-400 text-xs">
+                                {material.notes || '-'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-black/20 rounded-lg border border-gray-800">
+                      <p className="text-sm text-gray-500">No material requirements defined</p>
                     </div>
                   )}
                 </div>
