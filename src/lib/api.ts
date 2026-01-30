@@ -113,6 +113,11 @@ export const authAPI = {
     const response = await api.get('/auth/me');
     return response.data;
   },
+  
+  updateProfile: async (profileData: { email?: string; full_name?: string; badge_id?: string; password?: string }) => {
+    const response = await api.put('/users/me', profileData);
+    return response.data;
+  },
 };
 
 // Customers API

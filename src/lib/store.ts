@@ -10,6 +10,7 @@ interface User {
   email: string;
   full_name: string;
   badge_id?: string;
+  is_active: boolean;
   role: {
     id: number;
     name: string;

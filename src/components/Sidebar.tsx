@@ -14,7 +14,8 @@ import {
   Users,
   Building2,
   ClipboardCheck,
-  Truck
+  Truck,
+  UserCircle
 } from 'lucide-react';
 
 const Sidebar = React.memo(() => {
@@ -33,6 +34,7 @@ const Sidebar = React.memo(() => {
       { name: 'Quality', href: '/inspections', icon: ClipboardCheck },
       { name: 'Shipping', href: '/shipments', icon: Truck },
       { name: 'QR Scanner', href: '/qr-scanner', icon: QrCode },
+      { name: 'Profile', href: '/profile', icon: UserCircle },
     ];
 
     if (user?.role?.name === 'Admin' || user?.role?.name === 'Management') {

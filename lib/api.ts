@@ -48,6 +48,7 @@ api.interceptors.response.use(
 export const authAPI: {
   login: (username: string, password: string) => Promise<any>;
   getCurrentUser: () => Promise<any>;
+  updateProfile: (profileData: { email?: string; full_name?: string; badge_id?: string; password?: string }) => Promise<any>;
   logout: () => void;
 } = {
   login: async (username: string, password: string) => {
@@ -74,6 +75,11 @@ export const authAPI: {
     return response.data;
   },
   
+  updateProfile: async (profileData: { email?: string; full_name?: string; badge_id?: string; password?: string }) => {
+    const response = await api.put('/api/users/me', profileData);
+    return response.data;
+  },
+  
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -89,6 +95,11 @@ export const usersAPI = {
   
   getById: async (id: number) => {
     const response = await api.get(`/api/users/${id}`);
+    return response.data;
+  },
+  
+  getRoles: async () => {
+    const response = await api.get('/api/users/roles/');
     return response.data;
   },
   

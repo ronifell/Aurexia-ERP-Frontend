@@ -176,6 +176,27 @@ const PartNumbersPage = () => {
     }
   };
 
+  const handleDelete = async (partNumber: PartNumber) => {
+    // Confirm deletion
+    const confirmed = window.confirm(
+      `Are you sure you want to delete part number "${partNumber.part_number}"?\n\n` +
+      `This action cannot be undone. If this part is referenced in sales orders, production orders, shipments, or used as a sub-assembly, the deletion will be prevented.`
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+    
+    try {
+      await partNumbersAPI.delete(partNumber.id);
+      toast.success(`Part number "${partNumber.part_number}" deleted successfully!`);
+      loadData(); // Refresh the list
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to delete part number';
+      toast.error(errorMessage);
+    }
+  };
+
   const addRouting = () => {
     const nextSequence = routings.length > 0 
       ? Math.max(...routings.map(r => r.sequence_number)) + 10 
@@ -314,6 +335,13 @@ const PartNumbersPage = () => {
                               title="View part number details"
                             >
                               <Eye className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(pn)}
+                              className="p-1.5 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400"
+                              title="Delete part number"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>

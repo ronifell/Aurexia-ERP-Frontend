@@ -17,6 +17,9 @@ const UsersPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -24,6 +27,14 @@ const UsersPage = () => {
     full_name: '',
     badge_id: '',
     role_id: '',
+  });
+  const [editFormData, setEditFormData] = useState({
+    email: '',
+    full_name: '',
+    badge_id: '',
+    role_id: '',
+    is_active: true,
+    password: '',
   });
 
   useEffect(() => {
@@ -90,6 +101,76 @@ const UsersPage = () => {
       loadData();
     } catch (error: any) {
       toast.error(error.message || 'Failed to create user');
+    }
+  };
+
+  const handleEditClick = (user: User) => {
+    setSelectedUser(user);
+    setEditFormData({
+      email: user.email || '',
+      full_name: user.full_name || '',
+      badge_id: user.badge_id || '',
+      role_id: user.role_id?.toString() || '',
+      is_active: user.is_active,
+      password: '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+
+    try {
+      const updateData: any = {
+        email: editFormData.email || null,
+        full_name: editFormData.full_name || null,
+        badge_id: editFormData.badge_id || null,
+        role_id: editFormData.role_id ? parseInt(editFormData.role_id) : null,
+        is_active: editFormData.is_active,
+      };
+
+      // Only include password if it's provided
+      if (editFormData.password) {
+        updateData.password = editFormData.password;
+      }
+
+      await usersAPI.update(selectedUser.id, updateData);
+      toast.success('User updated successfully!');
+      setShowEditModal(false);
+      setSelectedUser(null);
+      setEditFormData({
+        email: '',
+        full_name: '',
+        badge_id: '',
+        role_id: '',
+        is_active: true,
+        password: '',
+      });
+      loadData();
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || error.message || 'Failed to update user');
+    }
+  };
+
+  const handleDeleteClick = (user: User) => {
+    setSelectedUser(user);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedUser) return;
+
+    try {
+      await usersAPI.delete(selectedUser.id);
+      toast.success('User deleted successfully!');
+      setShowDeleteConfirm(false);
+      setSelectedUser(null);
+      loadData();
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || error.message || 'Failed to delete user');
+      setShowDeleteConfirm(false);
+      setSelectedUser(null);
     }
   };
 
@@ -220,10 +301,18 @@ const UsersPage = () => {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex justify-center space-x-2">
-                        <button className="p-2 hover:bg-yellow-500/10 rounded-lg text-gray-400 hover:text-yellow-400">
+                        <button 
+                          onClick={() => handleEditClick(user)}
+                          className="p-2 hover:bg-yellow-500/10 rounded-lg text-gray-400 hover:text-yellow-400 transition-colors"
+                          title="Edit user"
+                        >
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button className="p-2 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400">
+                        <button 
+                          onClick={() => handleDeleteClick(user)}
+                          className="p-2 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-colors"
+                          title="Delete user"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -379,6 +468,159 @@ const UsersPage = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Edit User Modal */}
+        {showEditModal && selectedUser && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="card-aurexia p-8 max-w-md w-full">
+              <h2 className="text-2xl font-bold text-gray-100 mb-6">Edit User: {selectedUser.username}</h2>
+              
+              <form onSubmit={handleUpdateUser} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.full_name}
+                    onChange={(e) => setEditFormData({...editFormData, full_name: e.target.value})}
+                    className="w-full px-4 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                    placeholder="John Doe"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={editFormData.email}
+                    onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                    className="w-full px-4 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                    placeholder="user@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Badge ID (for QR scanning)
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.badge_id}
+                    onChange={(e) => setEditFormData({...editFormData, badge_id: e.target.value})}
+                    className="w-full px-4 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                    placeholder="OP001"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Role
+                  </label>
+                  <select
+                    value={editFormData.role_id}
+                    onChange={(e) => setEditFormData({...editFormData, role_id: e.target.value})}
+                    className="w-full px-4 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                  >
+                    <option value="">No Role</option>
+                    {roles.map((role) => (
+                      <option key={role.id} value={role.id}>
+                        {role.name} {role.can_view_prices ? '(Can view prices)' : '(No price access)'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Password (leave blank to keep current)
+                  </label>
+                  <input
+                    type="password"
+                    value={editFormData.password}
+                    onChange={(e) => setEditFormData({...editFormData, password: e.target.value})}
+                    className="w-full px-4 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is_active"
+                    checked={editFormData.is_active}
+                    onChange={(e) => setEditFormData({...editFormData, is_active: e.target.checked})}
+                    className="w-4 h-4 text-yellow-500 bg-black/50 border-yellow-500/30 rounded focus:ring-yellow-500"
+                  />
+                  <label htmlFor="is_active" className="text-sm font-medium text-gray-300">
+                    Active
+                  </label>
+                </div>
+
+                <div className="flex space-x-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setSelectedUser(null);
+                      setEditFormData({
+                        email: '',
+                        full_name: '',
+                        badge_id: '',
+                        role_id: '',
+                        is_active: true,
+                        password: '',
+                      });
+                    }}
+                    className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 font-semibold rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 btn-aurexia py-2"
+                  >
+                    Update User
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && selectedUser && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="card-aurexia p-8 max-w-md w-full">
+              <h2 className="text-2xl font-bold text-red-400 mb-4">Delete User</h2>
+              <p className="text-gray-300 mb-6">
+                Are you sure you want to delete user <strong className="text-gray-100">{selectedUser.username}</strong>? 
+                This action cannot be undone.
+              </p>
+              <div className="flex space-x-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setSelectedUser(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 font-semibold rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteConfirm}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         )}
