@@ -425,7 +425,7 @@ const InventoryPage = () => {
                                 onClick={() => {
                                   setEditingMaterial(material);
                                   const materialType = material.type || '';
-                                  const isOtherType = materialType && !materialTypes.slice(0, -1).includes(materialType);
+                                  const isOtherType = !!materialType && !materialTypes.slice(0, -1).includes(materialType);
                                   setMaterialTypeOther(isOtherType);
                                   setCustomMaterialType(isOtherType ? materialType : '');
                                   setMaterialForm({
