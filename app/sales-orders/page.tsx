@@ -40,6 +40,8 @@ const SalesOrdersPage = () => {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([
     { part_number_id: 0, quantity: 1, unit_price: undefined }
   ]);
+  const [partNumberSearchTerms, setPartNumberSearchTerms] = useState<{ [key: number]: string }>({});
+  const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
 
   // Use SWR hooks for optimized data fetching with caching
   const { orders: ordersData, isLoading: ordersLoading, refresh: refreshOrders } = useSalesOrders();
@@ -162,11 +164,19 @@ const SalesOrdersPage = () => {
       status: order.status,
       notes: order.notes || '',
     });
-    setOrderItems(order.items.map(item => ({
+    const items = order.items.map(item => ({
       part_number_id: item.part_number_id,
       quantity: item.quantity,
       unit_price: item.unit_price,
-    })));
+    }));
+    setOrderItems(items);
+    // Initialize search terms for all items
+    const searchTerms: { [key: number]: string } = {};
+    items.forEach((_, index) => {
+      searchTerms[index] = '';
+    });
+    setPartNumberSearchTerms(searchTerms);
+    setOpenDropdownIndex(null);
     setShowModal(true);
   };
 
@@ -195,6 +205,8 @@ const SalesOrdersPage = () => {
       notes: '',
     });
     setOrderItems([{ part_number_id: 0, quantity: 1, unit_price: undefined }]);
+    setPartNumberSearchTerms({});
+    setOpenDropdownIndex(null);
   };
 
   const handleCloseModal = () => {
@@ -205,12 +217,31 @@ const SalesOrdersPage = () => {
 
   const addOrderItem = () => {
     setOrderItems([...orderItems, { part_number_id: 0, quantity: 1, unit_price: undefined }]);
+    setPartNumberSearchTerms({ ...partNumberSearchTerms, [orderItems.length]: '' });
   };
 
   const removeOrderItem = (index: number) => {
     if (orderItems.length > 1) {
       const newItems = orderItems.filter((_, i) => i !== index);
       setOrderItems(newItems);
+      // Clean up search terms and reindex
+      const newSearchTerms: { [key: number]: string } = {};
+      newItems.forEach((_, newIndex) => {
+        // Items before the removed index keep their original index
+        // Items after the removed index shift down by 1
+        const oldIndex = newIndex < index ? newIndex : newIndex + 1;
+        if (partNumberSearchTerms[oldIndex] !== undefined) {
+          newSearchTerms[newIndex] = partNumberSearchTerms[oldIndex];
+        }
+      });
+      setPartNumberSearchTerms(newSearchTerms);
+      // Close dropdown if it was open for the removed item
+      if (openDropdownIndex === index) {
+        setOpenDropdownIndex(null);
+      } else if (openDropdownIndex !== null && openDropdownIndex > index) {
+        // Adjust dropdown index if it was after the removed item
+        setOpenDropdownIndex(openDropdownIndex - 1);
+      }
     }
   };
 
@@ -218,12 +249,17 @@ const SalesOrdersPage = () => {
     const newItems = [...orderItems];
     newItems[index] = { ...newItems[index], [field]: value };
     
-    // Auto-fill unit price from part number if not manually set
+    // Auto-fill unit price from part number when selected
     if (field === 'part_number_id') {
       const partNumber = partNumbers.find(p => p.id === parseInt(value));
-      if (partNumber && partNumber.unit_price && !newItems[index].unit_price) {
-        newItems[index].unit_price = partNumber.unit_price;
+      if (partNumber && partNumber.unit_price) {
+        // Always auto-fill the price from part number, even if it was previously set
+        const price = Number(partNumber.unit_price);
+        newItems[index].unit_price = price;
+        toast.success(`Price auto-filled: $${price.toFixed(2)}`);
       }
+      // Clear search term when part number is selected
+      setPartNumberSearchTerms({ ...partNumberSearchTerms, [index]: '' });
     }
     
     setOrderItems(newItems);
@@ -647,25 +683,101 @@ const SalesOrdersPage = () => {
                   <div className="space-y-3">
                     {orderItems.map((item, index) => {
                       const lineTotal = getItemTotal(item);
+                      const searchTerm = partNumberSearchTerms[index] || '';
+                      // If dropdown is open and no search term, show all parts. Otherwise filter by search term.
+                      const filteredParts = (openDropdownIndex === index && !searchTerm)
+                        ? partNumbers
+                        : partNumbers.filter(part =>
+                            part.part_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            part.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            part.customer?.name.toLowerCase().includes(searchTerm.toLowerCase())
+                          );
+                      const selectedPart = partNumbers.find(p => p.id === item.part_number_id);
+                      
                       return (
                         <div key={index} className="flex gap-3 items-end">
                           <div className="flex-1">
                             <label className="block text-xs font-medium text-gray-400 mb-1">
                               Part Number *
                             </label>
-                            <select
-                              required
-                              value={item.part_number_id}
-                              onChange={(e) => updateOrderItem(index, 'part_number_id', parseInt(e.target.value))}
-                              className="w-full px-3 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100 text-sm"
-                            >
-                              <option value="0">Select part number...</option>
-                              {partNumbers.map(part => (
-                                <option key={part.id} value={part.id}>
-                                  {part.part_number} {part.description ? `- ${part.description}` : ''}
-                                </option>
-                              ))}
-                            </select>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => {
+                                  const term = e.target.value;
+                                  setPartNumberSearchTerms({ ...partNumberSearchTerms, [index]: term });
+                                  // Clear selection if user is typing a different value
+                                  if (term && item.part_number_id > 0) {
+                                    const currentPart = partNumbers.find(p => p.id === item.part_number_id);
+                                    const currentDisplay = currentPart 
+                                      ? `${currentPart.part_number}${currentPart.description ? ` - ${currentPart.description}` : ''}`
+                                      : '';
+                                    if (term !== currentDisplay) {
+                                      updateOrderItem(index, 'part_number_id', 0);
+                                    }
+                                  }
+                                }}
+                                onFocus={() => {
+                                  setOpenDropdownIndex(index);
+                                  // Clear search term when focusing to show all parts in dropdown
+                                  // User can then type to filter or select from the full list
+                                  if (searchTerm) {
+                                    setPartNumberSearchTerms({ ...partNumberSearchTerms, [index]: '' });
+                                  }
+                                }}
+                                onBlur={() => {
+                                  // Delay closing to allow onClick on dropdown items to fire first
+                                  setTimeout(() => {
+                                    setOpenDropdownIndex(null);
+                                  }, 200);
+                                }}
+                                placeholder={selectedPart 
+                                  ? `${selectedPart.part_number}${selectedPart.description ? ` - ${selectedPart.description}` : ''}`
+                                  : "Search part number, description, or customer..."
+                                }
+                                className="w-full px-3 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100 text-sm"
+                              />
+                              {openDropdownIndex === index && filteredParts.length > 0 && (
+                                <div className="absolute z-10 w-full mt-1 bg-black/95 border border-yellow-500/30 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                  {filteredParts.map(part => (
+                                    <button
+                                      key={part.id}
+                                      type="button"
+                                      onMouseDown={(e) => {
+                                        // Prevent onBlur from firing before onClick
+                                        e.preventDefault();
+                                      }}
+                                      onClick={() => {
+                                        updateOrderItem(index, 'part_number_id', part.id);
+                                        setPartNumberSearchTerms({ ...partNumberSearchTerms, [index]: '' });
+                                        // Keep dropdown open so user can select another part if needed
+                                        // The dropdown will close on blur
+                                      }}
+                                      className={`w-full text-left px-3 py-2 hover:bg-yellow-500/10 text-gray-100 text-sm border-b border-gray-800 last:border-b-0 ${
+                                        part.id === item.part_number_id ? 'bg-yellow-500/20' : ''
+                                      }`}
+                                    >
+                                      <div className="font-medium">{part.part_number}</div>
+                                      {part.description && (
+                                        <div className="text-xs text-gray-400">{part.description}</div>
+                                      )}
+                                      {part.customer && (
+                                        <div className="text-xs text-gray-500">Customer: {part.customer.name}</div>
+                                      )}
+                                      {part.unit_price && (
+                                        <div className="text-xs text-yellow-400 mt-1">Price: ${Number(part.unit_price).toFixed(2)}</div>
+                                      )}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                              {searchTerm && filteredParts.length === 0 && (
+                                <div className="absolute z-10 w-full mt-1 bg-black/95 border border-yellow-500/30 rounded-lg shadow-lg px-3 py-2 text-gray-400 text-sm">
+                                  No part numbers found
+                                </div>
+                              )}
+                            </div>
                           </div>
 
                           <div className="w-32">

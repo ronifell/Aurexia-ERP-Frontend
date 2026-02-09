@@ -14,7 +14,8 @@ import {
   Users, 
   LogOut,
   Menu,
-  X
+  X,
+  Warehouse
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -36,6 +37,7 @@ const Navbar = React.memo(() => {
       { name: 'Sales Orders', href: '/sales-orders', icon: ShoppingCart },
       { name: 'Production', href: '/production', icon: Factory },
       { name: 'Part Numbers', href: '/part-numbers', icon: Package },
+      { name: 'Material', href: '/inventory', icon: Warehouse },
       { name: 'QR Scanner', href: '/qr-scanner', icon: QrCode },
     ];
 

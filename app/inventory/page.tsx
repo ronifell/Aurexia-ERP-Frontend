@@ -70,6 +70,11 @@ const InventoryPage = () => {
     unit: '',
     minimum_stock: ''
   });
+  const [materialTypeOther, setMaterialTypeOther] = useState(false);
+  const [customMaterialType, setCustomMaterialType] = useState('');
+
+  // Predefined material types
+  const materialTypes = ['Aluminio', 'Galvanizado', 'Acero', 'Stainless Steel', 'Other'];
 
   // Suppliers state
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -168,6 +173,8 @@ const InventoryPage = () => {
       setShowMaterialModal(false);
       setEditingMaterial(null);
       setMaterialForm({ name: '', type: '', unit: '', minimum_stock: '' });
+      setMaterialTypeOther(false);
+      setCustomMaterialType('');
       loadData();
     } catch (error) {
       toast.error('Failed to save material');
@@ -338,7 +345,8 @@ const InventoryPage = () => {
 
           {/* Tabs */}
           <div className="flex space-x-2 mb-4 border-b border-yellow-500/20">
-            {['materials', 'suppliers', 'batches', 'movements'].map((tab) => (
+            {/* Only showing Materials tab - other tabs (suppliers, batches, movements) are hidden but code remains intact */}
+            {['materials'/*, 'suppliers', 'batches', 'movements'*/].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -416,9 +424,13 @@ const InventoryPage = () => {
                               <button 
                                 onClick={() => {
                                   setEditingMaterial(material);
+                                  const materialType = material.type || '';
+                                  const isOtherType = materialType && !materialTypes.slice(0, -1).includes(materialType);
+                                  setMaterialTypeOther(isOtherType);
+                                  setCustomMaterialType(isOtherType ? materialType : '');
                                   setMaterialForm({
                                     name: material.name,
-                                    type: material.type || '',
+                                    type: materialType,
                                     unit: material.unit || '',
                                     minimum_stock: material.minimum_stock?.toString() || ''
                                   });
@@ -587,6 +599,8 @@ const InventoryPage = () => {
                     setShowMaterialModal(false);
                     setEditingMaterial(null);
                     setMaterialForm({ name: '', type: '', unit: '', minimum_stock: '' });
+                    setMaterialTypeOther(false);
+                    setCustomMaterialType('');
                   }}
                   className="p-2 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-gray-200"
                 >
@@ -608,13 +622,39 @@ const InventoryPage = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Type</label>
-                    <input
-                      type="text"
-                      value={materialForm.type}
-                      onChange={(e) => setMaterialForm({...materialForm, type: e.target.value})}
+                    <select
+                      value={materialTypeOther ? 'Other' : materialForm.type}
+                      onChange={(e) => {
+                        if (e.target.value === 'Other') {
+                          setMaterialTypeOther(true);
+                          setMaterialForm({...materialForm, type: customMaterialType});
+                        } else {
+                          setMaterialTypeOther(false);
+                          setCustomMaterialType('');
+                          setMaterialForm({...materialForm, type: e.target.value});
+                        }
+                      }}
                       className="w-full px-4 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
-                      placeholder="e.g., Aluminio, Galvanizado"
-                    />
+                    >
+                      <option value="">Select type...</option>
+                      {materialTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                    {materialTypeOther && (
+                      <input
+                        type="text"
+                        value={customMaterialType}
+                        onChange={(e) => {
+                          setCustomMaterialType(e.target.value);
+                          setMaterialForm({...materialForm, type: e.target.value});
+                        }}
+                        placeholder="Enter custom material type..."
+                        className="w-full mt-2 px-4 py-2 bg-black/50 border border-yellow-500/30 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100"
+                      />
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Unit</label>
@@ -645,6 +685,8 @@ const InventoryPage = () => {
                       setShowMaterialModal(false);
                       setEditingMaterial(null);
                       setMaterialForm({ name: '', type: '', unit: '', minimum_stock: '' });
+                      setMaterialTypeOther(false);
+                      setCustomMaterialType('');
                     }}
                     className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-gray-100 font-semibold rounded-lg transition-colors"
                   >
